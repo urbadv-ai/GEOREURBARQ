@@ -1,0 +1,63 @@
+name: MG 853 P2A Lote 1 Areas 2025 Fix
+
+on:
+  pull_request:
+    paths:
+      - 'mg853-p2a-l1-area-fix/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pandas xlrd
+      - name: Extract official municipal areas
+        run: |
+          mkdir -p output
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          import pandas as pd
+          import requests
+
+          url='https://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/areas_territoriais/2025/AR_BR_RG_UF_RGINT_RGI_MUN_2025.xls'
+          p=Path('output/AR_BR_RG_UF_RGINT_RGI_MUN_2025.xls')
+          p.write_bytes(requests.get(url,timeout=300).content)
+          df=pd.read_excel(p,sheet_name='AR_BR_MUN_2025',engine='xlrd')
+          df.columns=[str(c).strip() for c in df.columns]
+          Path('output/areas_columns.json').write_text(json.dumps(df.columns.tolist(),ensure_ascii=False,indent=2),encoding='utf-8')
+          code='CD_MUN'
+          area=next(c for c in df.columns if str(c).upper().startswith('AR_') and 'MUN' in str(c).upper())
+          name=next((c for c in df.columns if str(c).upper().startswith('NM_') and 'MUN' in str(c).upper()),None)
+          uf=next((c for c in df.columns if 'SIGLA' in str(c).upper() or str(c).upper()=='UF'),None)
+          out=pd.DataFrame({
+            'cod_ibge_7':df[code].astype(str).str.replace(r'\.0$','',regex=True).str.zfill(7),
+            'municipio':df[name].astype(str) if name else '',
+            'uf':df[uf].astype(str) if uf else '',
+            'area_oficial_km2_ref_2025':pd.to_numeric(df[area],errors='coerce')
+          })
+          out=out[out.cod_ibge_7.str.startswith('31')].drop_duplicates('cod_ibge_7').sort_values('cod_ibge_7')
+          out['fonte']='IBGE — Áreas Territoriais 2025'
+          out['ano_referencia']=2025
+          out['url_fonte']=url
+          out['status_validacao']=out.apply(lambda r:'OK' if pd.notna(r.area_oficial_km2_ref_2025) else 'ERRO_AREA_NULA',axis=1)
+          out.to_csv('output/MG_853_AREAS_TERRITORIAIS_2025_V1_0.csv',index=False,encoding='utf-8-sig')
+          checks={'rows':len(out),'unique_codes':out.cod_ibge_7.nunique(),'prefix31':int(out.cod_ibge_7.str.startswith('31').sum()),'non_null_area':int(out.area_oficial_km2_ref_2025.notna().sum()),'min':float(out.area_oficial_km2_ref_2025.min()),'max':float(out.area_oficial_km2_ref_2025.max()),'columns':df.columns.tolist(),'area_column':area}
+          Path('output/areas_checks.json').write_text(json.dumps(checks,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(checks,ensure_ascii=False,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-areas-2025-fix
+          path: output
+          if-no-files-found: error
+          retention-days: 90
