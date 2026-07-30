@@ -1,0 +1,181 @@
+name: MG 853 P0 Data Collection
+
+on:
+  pull_request:
+    paths:
+      - 'mg853-p0/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pandas openpyxl requests beautifulsoup4
+      - name: Collect and profile official data
+        shell: bash
+        run: |
+          mkdir -p mg853-p0/output
+          cat > mg853-p0/collect.py <<'PY'
+          from __future__ import annotations
+          import json, re, hashlib
+          from pathlib import Path
+          import pandas as pd
+          import requests
+          from bs4 import BeautifulSoup
+
+          OUT = Path('mg853-p0/output')
+          OUT.mkdir(parents=True, exist_ok=True)
+          session = requests.Session()
+          session.headers['User-Agent'] = 'MG853-P0/1.0 (technical research; public official data)'
+
+          def sha256(path: Path) -> str:
+              h = hashlib.sha256()
+              with path.open('rb') as f:
+                  for chunk in iter(lambda: f.read(1024*1024), b''):
+                      h.update(chunk)
+              return h.hexdigest()
+
+          manifest = []
+
+          # 1) SIDRA table 4714: population, territorial area, demographic density.
+          sidra_url = 'https://apisidra.ibge.gov.br/values/t/4714/n6/all/v/all/p/2022'
+          r = session.get(sidra_url, timeout=180)
+          r.raise_for_status()
+          raw_sidra = OUT / 'sidra_4714_2022_raw.json'
+          raw_sidra.write_bytes(r.content)
+          payload = r.json()
+          if not isinstance(payload, list) or len(payload) < 2:
+              raise RuntimeError('Unexpected SIDRA response')
+          header = payload[0]
+          df = pd.DataFrame(payload[1:])
+          required = {'D1C','D1N','D2C','D2N','V'}
+          if not required.issubset(df.columns):
+              raise RuntimeError(f'SIDRA schema missing columns: {required-set(df.columns)}; columns={list(df.columns)}')
+          df = df[df['D1C'].astype(str).str.startswith('31')].copy()
+          df['V_num'] = pd.to_numeric(df['V'].astype(str).str.replace(',','.',regex=False), errors='coerce')
+          pivot = df.pivot_table(index=['D1C','D1N'], columns='D2C', values='V_num', aggfunc='first').reset_index()
+          pivot.columns = [str(c) for c in pivot.columns]
+          out = pd.DataFrame({
+              'cod_ibge_7': pivot['D1C'].astype(str),
+              'municipio_ibge': pivot['D1N'].astype(str).str.replace(r'\s+-\s+MG$', '', regex=True),
+              'populacao_censo_2022': pivot.get('93'),
+              'area_km2': pivot.get('6318'),
+              'densidade_hab_km2': pivot.get('614'),
+              'fonte': 'IBGE SIDRA - Tabela 4714',
+              'ano_base': 2022,
+              'url_fonte': sidra_url,
+          }).sort_values('cod_ibge_7')
+          out['status_validacao'] = out[['populacao_censo_2022','area_km2','densidade_hab_km2']].notna().all(axis=1).map({True:'OK',False:'DADO_AUSENTE'})
+          out_path = OUT / 'mg_853_censo_2022_sidra_4714.csv'
+          out.to_csv(out_path, index=False, encoding='utf-8-sig')
+          checks = {
+              'linhas_mg': int(len(out)),
+              'codigos_unicos': int(out['cod_ibge_7'].nunique()),
+              'codigos_prefixo_31': int(out['cod_ibge_7'].str.startswith('31').sum()),
+              'nomes_nao_nulos': int(out['municipio_ibge'].notna().sum()),
+              'populacao_nao_nula': int(out['populacao_censo_2022'].notna().sum()),
+              'area_nao_nula': int(out['area_km2'].notna().sum()),
+              'densidade_nao_nula': int(out['densidade_hab_km2'].notna().sum()),
+              'variaveis_sidra': df[['D2C','D2N']].drop_duplicates().to_dict('records'),
+          }
+          (OUT/'sidra_4714_checks.json').write_text(json.dumps(checks, ensure_ascii=False, indent=2), encoding='utf-8')
+          manifest += [
+              {'file': raw_sidra.name, 'source': sidra_url, 'sha256': sha256(raw_sidra)},
+              {'file': out_path.name, 'source': sidra_url, 'sha256': sha256(out_path)},
+          ]
+
+          # 2) Official MUNIC 2021 workbook.
+          munic_url = 'https://ftp.ibge.gov.br/Perfil_Municipios/2021/Base_de_Dados/Base_MUNIC_2021_20240425.xlsx'
+          r = session.get(munic_url, timeout=300)
+          r.raise_for_status()
+          xlsx_path = OUT / 'Base_MUNIC_2021_20240425.xlsx'
+          xlsx_path.write_bytes(r.content)
+          manifest.append({'file': xlsx_path.name, 'source': munic_url, 'sha256': sha256(xlsx_path)})
+
+          xls = pd.ExcelFile(xlsx_path, engine='openpyxl')
+          sheets_rows = []
+          cols_rows = []
+          previews = {}
+          mg_frames = []
+
+          def norm(v):
+              return re.sub(r'\s+', ' ', str(v).strip()) if pd.notna(v) else ''
+
+          for sheet in xls.sheet_names:
+              raw = pd.read_excel(xlsx_path, sheet_name=sheet, header=None, nrows=30, engine='openpyxl')
+              previews[sheet] = raw.fillna('').astype(str).values.tolist()
+              # Detect likely header row.
+              scores=[]
+              for i,row in raw.iterrows():
+                  vals=[norm(v).lower() for v in row.tolist()]
+                  nonempty=sum(bool(v) for v in vals)
+                  keywords=sum(any(k in v for k in ['munic','cód','cod','uf','nome']) for v in vals)
+                  scores.append((keywords*100+nonempty,i))
+              header_row=max(scores)[1] if scores else 0
+              try:
+                  tab=pd.read_excel(xlsx_path, sheet_name=sheet, header=header_row, engine='openpyxl')
+              except Exception:
+                  continue
+              tab.columns=[norm(c) or f'col_{j}' for j,c in enumerate(tab.columns)]
+              sheets_rows.append({'sheet':sheet,'header_row_zero_based':int(header_row),'rows':int(len(tab)),'columns':int(len(tab.columns))})
+              for j,c in enumerate(tab.columns):
+                  vals=tab[c].dropna().astype(str).head(5).tolist()
+                  cols_rows.append({'sheet':sheet,'column_index':j,'column_name':c,'sample_values':' | '.join(vals)})
+              # Find a municipality code column by content.
+              code_col=None
+              for c in tab.columns:
+                  s=tab[c].dropna().astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+                  if len(s) and (s.str.fullmatch(r'\d{7}').mean() > .70):
+                      code_col=c; break
+              if code_col:
+                  tmp=tab.copy()
+                  tmp['cod_ibge_7']=tmp[code_col].astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+                  tmp=tmp[tmp['cod_ibge_7'].str.startswith('31')]
+                  if len(tmp):
+                      tmp.insert(0,'sheet_origem',sheet)
+                      mg_frames.append(tmp)
+
+          pd.DataFrame(sheets_rows).to_csv(OUT/'munic_2021_sheets_inventory.csv',index=False,encoding='utf-8-sig')
+          pd.DataFrame(cols_rows).to_csv(OUT/'munic_2021_columns_inventory.csv',index=False,encoding='utf-8-sig')
+          (OUT/'munic_2021_previews.json').write_text(json.dumps(previews,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          if mg_frames:
+              # Long, lossless export: one row per municipality/sheet/field/value.
+              long_parts=[]
+              for f in mg_frames:
+                  id_vars=['sheet_origem','cod_ibge_7']
+                  value_vars=[c for c in f.columns if c not in id_vars]
+                  m=f.melt(id_vars=id_vars,value_vars=value_vars,var_name='campo_origem',value_name='valor_origem')
+                  m=m[m['valor_origem'].notna()]
+                  long_parts.append(m)
+              long=pd.concat(long_parts,ignore_index=True)
+              long.to_csv(OUT/'mg_munic_2021_long.csv',index=False,encoding='utf-8-sig')
+              coverage=(long.groupby(['sheet_origem'])['cod_ibge_7'].nunique().reset_index(name='municipios_mg'))
+              coverage.to_csv(OUT/'munic_2021_mg_coverage.csv',index=False,encoding='utf-8-sig')
+
+          # Candidate columns for urban instruments, preserving source wording.
+          inv=pd.DataFrame(cols_rows)
+          pattern=r'plano diretor|perímetro urbano|perimetro urbano|parcelamento|uso e ocupação|uso do solo|zoneamento|zeis|interesse social|outorga onerosa|contribuição de melhoria|operacão urbana|operação urbana|impacto de vizinhança|código de obras|codigo de obras|regularização fundiária|regularizacao fundiaria'
+          cand=inv[inv['column_name'].str.contains(pattern,case=False,regex=True,na=False)]
+          cand.to_csv(OUT/'munic_2021_instrument_columns_candidates.csv',index=False,encoding='utf-8-sig')
+
+          (OUT/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps({'sidra_checks': checks, 'munic_sheets': sheets_rows, 'candidate_columns': len(cand)}, ensure_ascii=False, indent=2))
+          PY
+          python mg853-p0/collect.py
+      - name: Upload P0 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p0-official-data
+          path: mg853-p0/output
+          if-no-files-found: error
+          retention-days: 7
