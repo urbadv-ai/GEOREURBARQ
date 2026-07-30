@@ -28,9 +28,9 @@ jobs:
           mkdir -p mg853-p1/output
           cat > mg853-p1/collect.py <<'PY'
           from __future__ import annotations
-          import hashlib, json, re, time
+          import hashlib, json, re
           from pathlib import Path
-          from urllib.parse import urljoin, urlparse
+          from urllib.parse import urljoin
           import pandas as pd
           import requests
           from bs4 import BeautifulSoup
@@ -61,22 +61,28 @@ jobs:
               p.write_bytes(r.content)
               return p
 
-          manifest = []
-          report = {'generated_at_utc': pd.Timestamp.utcnow().isoformat(), 'sources': {}}
+          def norm(v):
+              if pd.isna(v): return ''
+              return re.sub(r'\s+', ' ', str(v).strip())
 
-          # ------------------------------------------------------------
+          def unique_names(cols):
+              counts={}; out=[]
+              for j,c in enumerate(cols):
+                  base=norm(c) or f'col_{j}'
+                  n=counts.get(base,0)
+                  counts[base]=n+1
+                  out.append(base if n==0 else f'{base}__dup{n}')
+              return out
+
+          manifest = []
+          report = {'generated_at_utc': pd.Timestamp.now('UTC').isoformat(), 'sources': {}}
+
           # 1. MUNIC 2024 official full base
-          # ------------------------------------------------------------
           munic_url = 'https://ftp.ibge.gov.br/Perfil_Municipios/2024/Base_de_Dados/Base_MUNIC_2024_20251107.xlsx'
           munic_path = save_response('Base_MUNIC_2024_20251107.xlsx', munic_url, 360)
           manifest.append({'file': munic_path.name, 'source': munic_url, 'sha256': sha256(munic_path)})
           xls = pd.ExcelFile(munic_path, engine='openpyxl')
           sheet_inventory=[]; col_inventory=[]; previews={}; mg_long=[]
-
-          def norm(v):
-              if pd.isna(v): return ''
-              return re.sub(r'\s+', ' ', str(v).strip())
-
           for sheet in xls.sheet_names:
               raw = pd.read_excel(munic_path, sheet_name=sheet, header=None, nrows=40, engine='openpyxl')
               previews[sheet]=raw.fillna('').astype(str).values.tolist()
@@ -91,13 +97,14 @@ jobs:
                   tab=pd.read_excel(munic_path, sheet_name=sheet, header=header_row, engine='openpyxl')
               except Exception as e:
                   sheet_inventory.append({'sheet':sheet,'error':repr(e)}); continue
-              tab.columns=[norm(c) or f'col_{j}' for j,c in enumerate(tab.columns)]
+              tab.columns=unique_names(tab.columns)
               sheet_inventory.append({'sheet':sheet,'header_row_zero_based':int(header_row),'rows':int(len(tab)),'columns':int(len(tab.columns))})
               for j,c in enumerate(tab.columns):
-                  col_inventory.append({'sheet':sheet,'column_index':j,'column_name':c,'sample_values':' | '.join(tab[c].dropna().astype(str).head(6).tolist())})
+                  sample=tab.iloc[:,j].dropna().astype(str).head(6).tolist()
+                  col_inventory.append({'sheet':sheet,'column_index':j,'column_name':c,'sample_values':' | '.join(sample)})
               code_col=None
-              for c in tab.columns:
-                  s=tab[c].dropna().astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+              for j,c in enumerate(tab.columns):
+                  s=tab.iloc[:,j].dropna().astype(str).str.replace(r'\.0$','',regex=True).str.strip()
                   if len(s) and (s.str.fullmatch(r'\d{7}').mean() > .70):
                       code_col=c; break
               if code_col:
@@ -105,12 +112,10 @@ jobs:
                   tmp['cod_ibge_7']=tmp[code_col].astype(str).str.replace(r'\.0$','',regex=True).str.strip()
                   tmp=tmp[tmp['cod_ibge_7'].str.startswith('31')]
                   if len(tmp):
-                      id_vars=['cod_ibge_7']
-                      m=tmp.melt(id_vars=id_vars,var_name='campo_origem',value_name='valor_origem')
+                      m=tmp.melt(id_vars=['cod_ibge_7'],var_name='campo_origem',value_name='valor_origem')
                       m=m[m['valor_origem'].notna()]
                       m.insert(0,'sheet_origem',sheet)
                       mg_long.append(m)
-
           pd.DataFrame(sheet_inventory).to_csv(OUT/'munic_2024_sheets_inventory.csv',index=False,encoding='utf-8-sig')
           inv=pd.DataFrame(col_inventory)
           inv.to_csv(OUT/'munic_2024_columns_inventory.csv',index=False,encoding='utf-8-sig')
@@ -124,9 +129,7 @@ jobs:
           cand.to_csv(OUT/'munic_2024_capacity_candidates.csv',index=False,encoding='utf-8-sig')
           report['sources']['munic_2024']={'url':munic_url,'sheets':sheet_inventory,'candidate_columns':int(len(cand))}
 
-          # ------------------------------------------------------------
           # 2. IDHM / Atlas-PNUD official downloadable workbook
-          # ------------------------------------------------------------
           idhm_url='https://www.undp.org/sites/g/files/zskgke326/files/2023-07/base_de_dados.xlsx'
           idhm_path=save_response('PNUD_IDHM_base_de_dados.xlsx',idhm_url,300)
           manifest.append({'file':idhm_path.name,'source':idhm_url,'sha256':sha256(idhm_path)})
@@ -143,10 +146,11 @@ jobs:
               h=best[1]
               try: tab=pd.read_excel(idhm_path,sheet_name=sheet,header=h,engine='openpyxl')
               except Exception as e: idhm_sheets.append({'sheet':sheet,'error':repr(e)}); continue
-              tab.columns=[norm(c) or f'col_{j}' for j,c in enumerate(tab.columns)]
+              tab.columns=unique_names(tab.columns)
               idhm_sheets.append({'sheet':sheet,'header_row_zero_based':int(h),'rows':int(len(tab)),'columns':int(len(tab.columns))})
               for j,c in enumerate(tab.columns):
-                  idhm_cols.append({'sheet':sheet,'column_index':j,'column_name':c,'sample_values':' | '.join(tab[c].dropna().astype(str).head(6).tolist())})
+                  sample=tab.iloc[:,j].dropna().astype(str).head(6).tolist()
+                  idhm_cols.append({'sheet':sheet,'column_index':j,'column_name':c,'sample_values':' | '.join(sample)})
           pd.DataFrame(idhm_sheets).to_csv(OUT/'idhm_sheets_inventory.csv',index=False,encoding='utf-8-sig')
           idhm_inv=pd.DataFrame(idhm_cols)
           idhm_inv.to_csv(OUT/'idhm_columns_inventory.csv',index=False,encoding='utf-8-sig')
@@ -155,9 +159,7 @@ jobs:
           idhm_cand.to_csv(OUT/'idhm_candidate_columns.csv',index=False,encoding='utf-8-sig')
           report['sources']['idhm']={'url':idhm_url,'sheets':idhm_sheets,'candidate_columns':int(len(idhm_cand))}
 
-          # ------------------------------------------------------------
           # 3. IDSC-BR discovery and extraction
-          # ------------------------------------------------------------
           idsc_base='https://idsc.cidadessustentaveis.org.br/'
           pages=['','rankings/','methodology','map','profiles','evolution/','robots.txt','sitemap.xml']
           discovered=set(); scripts=set(); page_meta=[]
