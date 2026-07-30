@@ -19,19 +19,21 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: python -m pip install --upgrade pandas xlrd
+        run: python -m pip install --upgrade pandas xlrd requests
       - name: Extract official municipal areas
         run: |
           mkdir -p output
           python - <<'PY'
-          import json, re
+          import json
           from pathlib import Path
           import pandas as pd
           import requests
 
           url='https://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/areas_territoriais/2025/AR_BR_RG_UF_RGINT_RGI_MUN_2025.xls'
           p=Path('output/AR_BR_RG_UF_RGINT_RGI_MUN_2025.xls')
-          p.write_bytes(requests.get(url,timeout=300).content)
+          r=requests.get(url,timeout=300)
+          r.raise_for_status()
+          p.write_bytes(r.content)
           df=pd.read_excel(p,sheet_name='AR_BR_MUN_2025',engine='xlrd')
           df.columns=[str(c).strip() for c in df.columns]
           Path('output/areas_columns.json').write_text(json.dumps(df.columns.tolist(),ensure_ascii=False,indent=2),encoding='utf-8')
@@ -51,7 +53,7 @@ jobs:
           out['url_fonte']=url
           out['status_validacao']=out.apply(lambda r:'OK' if pd.notna(r.area_oficial_km2_ref_2025) else 'ERRO_AREA_NULA',axis=1)
           out.to_csv('output/MG_853_AREAS_TERRITORIAIS_2025_V1_0.csv',index=False,encoding='utf-8-sig')
-          checks={'rows':len(out),'unique_codes':out.cod_ibge_7.nunique(),'prefix31':int(out.cod_ibge_7.str.startswith('31').sum()),'non_null_area':int(out.area_oficial_km2_ref_2025.notna().sum()),'min':float(out.area_oficial_km2_ref_2025.min()),'max':float(out.area_oficial_km2_ref_2025.max()),'columns':df.columns.tolist(),'area_column':area}
+          checks={'rows':len(out),'unique_codes':int(out.cod_ibge_7.nunique()),'prefix31':int(out.cod_ibge_7.str.startswith('31').sum()),'non_null_area':int(out.area_oficial_km2_ref_2025.notna().sum()),'min':float(out.area_oficial_km2_ref_2025.min()),'max':float(out.area_oficial_km2_ref_2025.max()),'columns':df.columns.tolist(),'area_column':area}
           Path('output/areas_checks.json').write_text(json.dumps(checks,ensure_ascii=False,indent=2),encoding='utf-8')
           print(json.dumps(checks,ensure_ascii=False,indent=2))
           PY
