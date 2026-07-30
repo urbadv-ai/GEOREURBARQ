@@ -38,16 +38,50 @@ jobs:
           PY
           mkdir -p mg853-p2a-l1/output/raw mg853-p2a-l1/output/normalized mg853-p2a-l1/output/audit
           python mg853-p2a-l1/collect.py
-      - name: Build final audited package
+      - name: Build final audited package and split raw snapshots
         run: |
           python mg853-p2a-l1/finalize.py
           cd mg853-p2a-l1
           zip -qr P2A_LOTE1_NORMALIZADO_AUDITADO_V1_0.zip final
+          mkdir -p raw_split
+          cd output/raw
+          zip -q ../../raw_split/RAW_01_GEOESPACIAL_P2A_LOTE1.zip MG_Municipios_2025.zip poligonos_FCUs_shp.zip FCUs_nao_setorizadas_shp_20260410.zip FCUs_nao_setorizadas_kml_20260410.zip
+          zip -q ../../raw_split/RAW_02_ENTORNO_PERCENTUAIS_P2A_LOTE1.zip br_setores_entorno_cd2022_percentuais.csv
+          zip -q ../../raw_split/RAW_03_ENTORNO_SETOR_E_DICIONARIOS_P2A_LOTE1.zip entorno_set_domicilios.zip entorno_set_faces.zip entorno_set_moradores.zip entorno_mun_domicilios.zip entorno_mun_faces.zip entorno_mun_moradores.zip entorno_dicionario.zip
+          zip -q ../../raw_split/RAW_04_AGREGADOS_AREAS_E_FCU_P2A_LOTE1.zip agg_municipio_Agregados_por_municipios_basico_BR_20260520.zip agg_municipio_Agregados_por_municipios_caracteristicas_domicilio1_BR.zip agg_setor_Agregados_por_setores_basico_BR_20260520.zip agg_setor_Agregados_por_setores_caracteristicas_domicilio1_BR.zip AR_BR_RG_UF_RGINT_RGI_MUN_2025.xls FavelaseComunidadesUrbanas2022Setores_20250417.xlsx
       - name: Upload final audited artifact
         uses: actions/upload-artifact@v4
         with:
           name: mg853-p2a-l1-final-audited-v1
           path: mg853-p2a-l1/P2A_LOTE1_NORMALIZADO_AUDITADO_V1_0.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload raw geospatial snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-01-geospatial
+          path: mg853-p2a-l1/raw_split/RAW_01_GEOESPACIAL_P2A_LOTE1.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload raw entorno percentuais snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-02-entorno-percentuais
+          path: mg853-p2a-l1/raw_split/RAW_02_ENTORNO_PERCENTUAIS_P2A_LOTE1.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload raw entorno setor snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-03-entorno-setor
+          path: mg853-p2a-l1/raw_split/RAW_03_ENTORNO_SETOR_E_DICIONARIOS_P2A_LOTE1.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload raw agregados areas FCU snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-04-agregados-areas-fcu
+          path: mg853-p2a-l1/raw_split/RAW_04_AGREGADOS_AREAS_E_FCU_P2A_LOTE1.zip
           if-no-files-found: error
           retention-days: 90
       - name: Upload normalized and audit artifact
