@@ -1,0 +1,228 @@
+name: MG 853 P1 Data Collection
+
+on:
+  pull_request:
+    paths:
+      - 'mg853-p1/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '30 5 1 * *'
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pandas openpyxl requests beautifulsoup4 lxml
+      - name: Collect and profile P1 sources
+        shell: bash
+        run: |
+          mkdir -p mg853-p1/output
+          cat > mg853-p1/collect.py <<'PY'
+          from __future__ import annotations
+          import hashlib, json, re, time
+          from pathlib import Path
+          from urllib.parse import urljoin, urlparse
+          import pandas as pd
+          import requests
+          from bs4 import BeautifulSoup
+
+          OUT = Path('mg853-p1/output')
+          OUT.mkdir(parents=True, exist_ok=True)
+          session = requests.Session()
+          session.headers.update({
+              'User-Agent': 'Mozilla/5.0 MG853-P1/1.0 public research data collector',
+              'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.5',
+          })
+
+          def get(url: str, timeout: int = 240) -> requests.Response:
+              r = session.get(url, timeout=timeout, allow_redirects=True)
+              r.raise_for_status()
+              return r
+
+          def sha256(path: Path) -> str:
+              h = hashlib.sha256()
+              with path.open('rb') as f:
+                  for chunk in iter(lambda: f.read(1024*1024), b''):
+                      h.update(chunk)
+              return h.hexdigest()
+
+          def save_response(name: str, url: str, timeout: int = 240) -> Path:
+              r = get(url, timeout)
+              p = OUT / name
+              p.write_bytes(r.content)
+              return p
+
+          manifest = []
+          report = {'generated_at_utc': pd.Timestamp.utcnow().isoformat(), 'sources': {}}
+
+          # ------------------------------------------------------------
+          # 1. MUNIC 2024 official full base
+          # ------------------------------------------------------------
+          munic_url = 'https://ftp.ibge.gov.br/Perfil_Municipios/2024/Base_de_Dados/Base_MUNIC_2024_20251107.xlsx'
+          munic_path = save_response('Base_MUNIC_2024_20251107.xlsx', munic_url, 360)
+          manifest.append({'file': munic_path.name, 'source': munic_url, 'sha256': sha256(munic_path)})
+          xls = pd.ExcelFile(munic_path, engine='openpyxl')
+          sheet_inventory=[]; col_inventory=[]; previews={}; mg_long=[]
+
+          def norm(v):
+              if pd.isna(v): return ''
+              return re.sub(r'\s+', ' ', str(v).strip())
+
+          for sheet in xls.sheet_names:
+              raw = pd.read_excel(munic_path, sheet_name=sheet, header=None, nrows=40, engine='openpyxl')
+              previews[sheet]=raw.fillna('').astype(str).values.tolist()
+              scores=[]
+              for i,row in raw.iterrows():
+                  vals=[norm(v).lower() for v in row.tolist()]
+                  nonempty=sum(bool(v) for v in vals)
+                  keywords=sum(any(k in v for k in ['munic','cód','cod','uf','nome','variável','variavel']) for v in vals)
+                  scores.append((keywords*100+nonempty,i))
+              header_row=max(scores)[1] if scores else 0
+              try:
+                  tab=pd.read_excel(munic_path, sheet_name=sheet, header=header_row, engine='openpyxl')
+              except Exception as e:
+                  sheet_inventory.append({'sheet':sheet,'error':repr(e)}); continue
+              tab.columns=[norm(c) or f'col_{j}' for j,c in enumerate(tab.columns)]
+              sheet_inventory.append({'sheet':sheet,'header_row_zero_based':int(header_row),'rows':int(len(tab)),'columns':int(len(tab.columns))})
+              for j,c in enumerate(tab.columns):
+                  col_inventory.append({'sheet':sheet,'column_index':j,'column_name':c,'sample_values':' | '.join(tab[c].dropna().astype(str).head(6).tolist())})
+              code_col=None
+              for c in tab.columns:
+                  s=tab[c].dropna().astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+                  if len(s) and (s.str.fullmatch(r'\d{7}').mean() > .70):
+                      code_col=c; break
+              if code_col:
+                  tmp=tab.copy()
+                  tmp['cod_ibge_7']=tmp[code_col].astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+                  tmp=tmp[tmp['cod_ibge_7'].str.startswith('31')]
+                  if len(tmp):
+                      id_vars=['cod_ibge_7']
+                      m=tmp.melt(id_vars=id_vars,var_name='campo_origem',value_name='valor_origem')
+                      m=m[m['valor_origem'].notna()]
+                      m.insert(0,'sheet_origem',sheet)
+                      mg_long.append(m)
+
+          pd.DataFrame(sheet_inventory).to_csv(OUT/'munic_2024_sheets_inventory.csv',index=False,encoding='utf-8-sig')
+          inv=pd.DataFrame(col_inventory)
+          inv.to_csv(OUT/'munic_2024_columns_inventory.csv',index=False,encoding='utf-8-sig')
+          (OUT/'munic_2024_previews.json').write_text(json.dumps(previews,ensure_ascii=False,indent=2),encoding='utf-8')
+          if mg_long:
+              long=pd.concat(mg_long,ignore_index=True)
+              long.to_csv(OUT/'mg_munic_2024_long.csv',index=False,encoding='utf-8-sig')
+              long.groupby('sheet_origem')['cod_ibge_7'].nunique().reset_index(name='municipios_mg').to_csv(OUT/'munic_2024_mg_coverage.csv',index=False,encoding='utf-8-sig')
+          capacity_pattern=r'tecnologia|informática|informatica|internet|página|pagina|portal|transparência|transparencia|dados abertos|acesso à informação|acesso a informacao|lai|controle interno|controladoria|conselho|governança|governanca|planejamento|cadastro|sistema de informação|sistema de informacao|geoprocessamento|georrefer|tic|cpd|processamento de dados'
+          cand=inv[inv['column_name'].str.contains(capacity_pattern,case=False,regex=True,na=False)] if len(inv) else inv
+          cand.to_csv(OUT/'munic_2024_capacity_candidates.csv',index=False,encoding='utf-8-sig')
+          report['sources']['munic_2024']={'url':munic_url,'sheets':sheet_inventory,'candidate_columns':int(len(cand))}
+
+          # ------------------------------------------------------------
+          # 2. IDHM / Atlas-PNUD official downloadable workbook
+          # ------------------------------------------------------------
+          idhm_url='https://www.undp.org/sites/g/files/zskgke326/files/2023-07/base_de_dados.xlsx'
+          idhm_path=save_response('PNUD_IDHM_base_de_dados.xlsx',idhm_url,300)
+          manifest.append({'file':idhm_path.name,'source':idhm_url,'sha256':sha256(idhm_path)})
+          idhm_xls=pd.ExcelFile(idhm_path,engine='openpyxl')
+          idhm_sheets=[]; idhm_cols=[]; idhm_previews={}
+          for sheet in idhm_xls.sheet_names:
+              raw=pd.read_excel(idhm_path,sheet_name=sheet,header=None,nrows=40,engine='openpyxl')
+              idhm_previews[sheet]=raw.fillna('').astype(str).values.tolist()
+              best=(0,0)
+              for i,row in raw.iterrows():
+                  vals=[norm(v).lower() for v in row.tolist()]
+                  score=sum(any(k in v for k in ['idhm','município','municipio','código','codigo','territorialidade','ano']) for v in vals)*100+sum(bool(v) for v in vals)
+                  if score>best[0]: best=(score,i)
+              h=best[1]
+              try: tab=pd.read_excel(idhm_path,sheet_name=sheet,header=h,engine='openpyxl')
+              except Exception as e: idhm_sheets.append({'sheet':sheet,'error':repr(e)}); continue
+              tab.columns=[norm(c) or f'col_{j}' for j,c in enumerate(tab.columns)]
+              idhm_sheets.append({'sheet':sheet,'header_row_zero_based':int(h),'rows':int(len(tab)),'columns':int(len(tab.columns))})
+              for j,c in enumerate(tab.columns):
+                  idhm_cols.append({'sheet':sheet,'column_index':j,'column_name':c,'sample_values':' | '.join(tab[c].dropna().astype(str).head(6).tolist())})
+          pd.DataFrame(idhm_sheets).to_csv(OUT/'idhm_sheets_inventory.csv',index=False,encoding='utf-8-sig')
+          idhm_inv=pd.DataFrame(idhm_cols)
+          idhm_inv.to_csv(OUT/'idhm_columns_inventory.csv',index=False,encoding='utf-8-sig')
+          (OUT/'idhm_previews.json').write_text(json.dumps(idhm_previews,ensure_ascii=False,indent=2),encoding='utf-8')
+          idhm_cand=idhm_inv[idhm_inv['column_name'].str.contains(r'idhm|longevidade|educação|educacao|renda|código|codigo|município|municipio',case=False,regex=True,na=False)] if len(idhm_inv) else idhm_inv
+          idhm_cand.to_csv(OUT/'idhm_candidate_columns.csv',index=False,encoding='utf-8-sig')
+          report['sources']['idhm']={'url':idhm_url,'sheets':idhm_sheets,'candidate_columns':int(len(idhm_cand))}
+
+          # ------------------------------------------------------------
+          # 3. IDSC-BR discovery and extraction
+          # ------------------------------------------------------------
+          idsc_base='https://idsc.cidadessustentaveis.org.br/'
+          pages=['','rankings/','methodology','map','profiles','evolution/','robots.txt','sitemap.xml']
+          discovered=set(); scripts=set(); page_meta=[]
+          for rel in pages:
+              url=urljoin(idsc_base,rel)
+              try:
+                  r=get(url,120)
+                  fn='idsc_'+(rel.strip('/').replace('/','_') or 'home')+'.html'
+                  if rel.endswith('.txt'): fn='idsc_robots.txt'
+                  if rel.endswith('.xml'): fn='idsc_sitemap.xml'
+                  (OUT/fn).write_bytes(r.content)
+                  page_meta.append({'url':url,'status':r.status_code,'content_type':r.headers.get('content-type'),'bytes':len(r.content)})
+                  if 'html' in r.headers.get('content-type',''):
+                      soup=BeautifulSoup(r.text,'html.parser')
+                      for a in soup.find_all('a',href=True): discovered.add(urljoin(url,a['href']))
+                      for s in soup.find_all('script',src=True): scripts.add(urljoin(url,s['src']))
+                      for txt in re.findall(r'https?://[^\"\'<>\s]+',r.text): discovered.add(txt.rstrip('),;'))
+              except Exception as e:
+                  page_meta.append({'url':url,'error':repr(e)})
+          js_hits=[]
+          for i,url in enumerate(sorted(scripts)[:80]):
+              try:
+                  r=get(url,120)
+                  p=OUT/f'idsc_script_{i:03d}.js'; p.write_bytes(r.content)
+                  text=r.text
+                  for pat in [r'https?://[^\"\'<>\s]+',r'[/A-Za-z0-9_.-]+\.(?:csv|xlsx|json|zip)',r'[\"\']([^\"\']*(?:api|download|ranking|score|municip)[^\"\']*)[\"\']']:
+                      for m in re.findall(pat,text,re.I):
+                          val=m if isinstance(m,str) else m[0]
+                          if val: discovered.add(urljoin(idsc_base,val))
+                  if re.search(r'csv|xlsx|download|api|pontua|ranking',text,re.I): js_hits.append({'script':url,'bytes':len(r.content)})
+              except Exception as e: js_hits.append({'script':url,'error':repr(e)})
+          candidates=[]
+          for url in sorted(discovered):
+              low=url.lower()
+              if any(k in low for k in ['.csv','.xlsx','.json','.zip','api','download','ranking','score','pontua']): candidates.append(url)
+          (OUT/'idsc_discovered_urls.txt').write_text('\n'.join(candidates),encoding='utf-8')
+          pd.DataFrame(page_meta).to_csv(OUT/'idsc_page_inventory.csv',index=False,encoding='utf-8-sig')
+          pd.DataFrame(js_hits).to_csv(OUT/'idsc_js_hits.csv',index=False,encoding='utf-8-sig')
+          downloads=[]
+          for i,url in enumerate(candidates[:150]):
+              try:
+                  r=get(url,90)
+                  ct=r.headers.get('content-type','').lower(); size=len(r.content)
+                  info={'url':url,'status':r.status_code,'content_type':ct,'bytes':size,'final_url':r.url}
+                  if size>100 and (any(x in ct for x in ['csv','spreadsheet','excel','json','zip','octet-stream']) or re.search(r'\.(csv|xlsx|json|zip)(\?|$)',r.url,re.I)):
+                      ext='.bin'
+                      for e in ['.csv','.xlsx','.json','.zip']:
+                          if e in r.url.lower() or e[1:] in ct: ext=e; break
+                      p=OUT/f'idsc_download_{i:03d}{ext}'; p.write_bytes(r.content)
+                      info['file']=p.name; info['sha256']=sha256(p)
+                      manifest.append({'file':p.name,'source':url,'sha256':info['sha256']})
+                  downloads.append(info)
+              except Exception as e: downloads.append({'url':url,'error':repr(e)})
+          pd.DataFrame(downloads).to_csv(OUT/'idsc_download_attempts.csv',index=False,encoding='utf-8-sig')
+          report['sources']['idsc']={'base':idsc_base,'pages':page_meta,'scripts':len(scripts),'candidate_urls':len(candidates),'download_attempts':downloads}
+
+          (OUT/'p1_collection_report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+          (OUT/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps({'munic_sheets':len(sheet_inventory),'munic_candidates':len(cand),'idhm_sheets':len(idhm_sheets),'idhm_candidates':len(idhm_cand),'idsc_scripts':len(scripts),'idsc_candidates':len(candidates),'idsc_downloads':sum(bool(x.get('file')) for x in downloads)},ensure_ascii=False,indent=2))
+          PY
+          python mg853-p1/collect.py
+      - name: Upload P1 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p1-data
+          path: mg853-p1/output
+          if-no-files-found: error
+          retention-days: 90
