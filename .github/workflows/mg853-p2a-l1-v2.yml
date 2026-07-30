@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'mg853-p2a-l1-v2/**'
+      - 'mg853-p2a-l1/finalize.py'
   workflow_dispatch:
   schedule:
     - cron: '30 7 2 * *'
@@ -37,6 +38,18 @@ jobs:
           PY
           mkdir -p mg853-p2a-l1/output/raw mg853-p2a-l1/output/normalized mg853-p2a-l1/output/audit
           python mg853-p2a-l1/collect.py
+      - name: Build final audited package
+        run: |
+          python mg853-p2a-l1/finalize.py
+          cd mg853-p2a-l1
+          zip -qr P2A_LOTE1_NORMALIZADO_AUDITADO_V1_0.zip final
+      - name: Upload final audited artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-final-audited-v1
+          path: mg853-p2a-l1/P2A_LOTE1_NORMALIZADO_AUDITADO_V1_0.zip
+          if-no-files-found: error
+          retention-days: 90
       - name: Upload normalized and audit artifact
         uses: actions/upload-artifact@v4
         with:
