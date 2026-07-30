@@ -1,0 +1,55 @@
+name: MG 853 P2A Lote 1 Territorio e Censo V2
+
+on:
+  pull_request:
+    paths:
+      - 'mg853-p2a-l1-v2/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '30 7 2 * *'
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pandas openpyxl xlrd requests beautifulsoup4 lxml geopandas pyogrio shapely pyarrow
+      - name: Extract collector from canonical workflow and run
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import requests, textwrap
+          url='https://raw.githubusercontent.com/urbadv-ai/GEOREURBARQ/main/.github/workflows/mg853-p2a-l1.yml'
+          text=requests.get(url,timeout=120).text
+          marker="cat > mg853-p2a-l1/collect.py <<'PY'\n"
+          body=text.split(marker,1)[1].split("\n          PY\n",1)[0]
+          Path('mg853-p2a-l1').mkdir(parents=True,exist_ok=True)
+          Path('mg853-p2a-l1/collect.py').write_text(textwrap.dedent(body),encoding='utf-8')
+          PY
+          mkdir -p mg853-p2a-l1/output/raw mg853-p2a-l1/output/normalized mg853-p2a-l1/output/audit
+          python mg853-p2a-l1/collect.py
+      - name: Upload normalized and audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-normalized-audit-v2
+          path: |
+            mg853-p2a-l1/output/normalized
+            mg853-p2a-l1/output/audit
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload raw snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-snapshot-v2
+          path: mg853-p2a-l1/output/raw
+          if-no-files-found: error
+          retention-days: 90
