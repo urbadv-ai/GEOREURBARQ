@@ -5,6 +5,8 @@ on:
     paths:
       - 'mg853-p1-id/**'
   workflow_dispatch:
+  schedule:
+    - cron: '0 6 1 * *'
 
 permissions:
   contents: read
@@ -12,42 +14,50 @@ permissions:
 jobs:
   extract:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: python -m pip install --upgrade pandas lxml requests beautifulsoup4
+        run: python -m pip install --upgrade pandas requests
       - name: Extract IDHM municipal and IDSC
         shell: bash
         run: |
           mkdir -p mg853-p1-id/output
           cat > mg853-p1-id/extract.py <<'PY'
           from __future__ import annotations
-          import csv, json, re, time, unicodedata
+          import hashlib, json, re, unicodedata
           from pathlib import Path
           import pandas as pd
           import requests
 
           OUT=Path('mg853-p1-id/output'); OUT.mkdir(parents=True,exist_ok=True)
-          s=requests.Session(); s.headers.update({'User-Agent':'Mozilla/5.0 MG853-P1/1.0','Referer':'https://idsc.cidadessustentaveis.org.br/','Origin':'https://idsc.cidadessustentaveis.org.br'})
-          def get(url,timeout=240):
-              r=s.get(url,timeout=timeout,allow_redirects=True); r.raise_for_status(); return r
+          s=requests.Session(); s.headers.update({
+              'User-Agent':'Mozilla/5.0 (compatible; MG853-P1/1.1; public data research)',
+              'Referer':'https://idsc.cidadessustentaveis.org.br/',
+              'Origin':'https://idsc.cidadessustentaveis.org.br',
+              'Accept':'application/json,text/plain,*/*',
+          })
+          def get(url,timeout=300,params=None):
+              r=s.get(url,params=params,timeout=timeout,allow_redirects=True); r.raise_for_status(); return r
           def norm(x):
               x='' if x is None else str(x)
               x=unicodedata.normalize('NFKD',x).encode('ascii','ignore').decode().lower()
               return re.sub(r'[^a-z0-9]+',' ',x).strip()
+          def sha256(path):
+              h=hashlib.sha256();
+              with open(path,'rb') as f:
+                  for chunk in iter(lambda:f.read(1024*1024),b''): h.update(chunk)
+              return h.hexdigest()
           def flatten(d,prefix=''):
               out={}
               if isinstance(d,dict):
                   for k,v in d.items():
                       key=f'{prefix}.{k}' if prefix else str(k)
-                      if isinstance(v,(dict,list)):
-                          if isinstance(v,list) and all(not isinstance(i,(dict,list)) for i in v): out[key]=' | '.join(map(str,v))
-                          elif isinstance(v,dict): out.update(flatten(v,key))
-                          else: out[key]=json.dumps(v,ensure_ascii=False)
+                      if isinstance(v,dict): out.update(flatten(v,key))
+                      elif isinstance(v,list): out[key]=json.dumps(v,ensure_ascii=False)
                       else: out[key]=v
               return out
           def lists_of_dicts(obj,path='root'):
@@ -57,97 +67,114 @@ jobs:
                   for k,v in obj.items(): found.extend(lists_of_dicts(v,f'{path}.{k}'))
               return found
 
-          # Official code/name map from SIDRA table 4714
+          manifest=[]
+          # Official code/name map from IBGE SIDRA
           sidra='https://apisidra.ibge.gov.br/values/t/4714/n6/all/v/93/p/2022'
-          data=get(sidra,300).json(); df=pd.DataFrame(data[1:])
+          data=get(sidra).json(); df=pd.DataFrame(data[1:])
           base=df[df['D1C'].astype(str).str.startswith('31')][['D1C','D1N']].drop_duplicates().copy()
           base['cod_ibge_7']=base['D1C'].astype(str)
           base['municipio']=base['D1N'].astype(str).str.replace(r'\s+-\s+MG$','',regex=True)
           base['nome_norm']=base['municipio'].map(norm)
-          base[['cod_ibge_7','municipio','nome_norm']].to_csv(OUT/'mg_853_name_code_map.csv',index=False,encoding='utf-8-sig')
+          base_map=base[['cod_ibge_7','municipio','nome_norm']].sort_values('cod_ibge_7')
+          p=OUT/'mg_853_name_code_map.csv'; base_map.to_csv(p,index=False,encoding='utf-8-sig')
+          manifest.append({'file':p.name,'source':sidra,'sha256':sha256(p)})
 
-          # Official PNUD municipal IDHM 2010 page
-          idhm_url='https://www.undp.org/pt/brazil/idhm-municipios-2010'
-          html=get(idhm_url,300).text
-          (OUT/'idhm_municipios_2010.html').write_text(html,encoding='utf-8')
-          tables=pd.read_html(html,decimal=',',thousands='.')
-          candidates=[]
-          for i,t in enumerate(tables):
-              cols=' | '.join(map(str,t.columns))
-              candidates.append({'table':i,'rows':len(t),'columns':cols})
-          pd.DataFrame(candidates).to_csv(OUT/'idhm_html_tables_inventory.csv',index=False,encoding='utf-8-sig')
-          selected=None
-          for t in tables:
-              cols=[str(c) for c in t.columns]
-              if len(t)>500 and any('Município' in c or 'Municipio' in c for c in cols) and any('IDHM 2010' in c for c in cols): selected=t; break
-          if selected is None: raise RuntimeError('Municipal IDHM table not found')
-          selected.columns=[re.sub(r'\s+',' ',str(c)).strip() for c in selected.columns]
-          mun_col=next(c for c in selected.columns if 'Município' in c or 'Municipio' in c)
-          selected['uf']=selected[mun_col].astype(str).str.extract(r'\(([A-Z]{2})\)\s*$')[0]
-          selected['municipio']=selected[mun_col].astype(str).str.replace(r'\s*\([A-Z]{2}\)\s*$','',regex=True)
-          selected=selected[selected['uf'].eq('MG')].copy()
-          selected['nome_norm']=selected['municipio'].map(norm)
-          idhm=selected.merge(base[['cod_ibge_7','municipio','nome_norm']],on='nome_norm',how='left',suffixes=('_fonte','_ibge'))
-          rename={}
-          for c in idhm.columns:
-              lc=norm(c)
-              if 'idhm renda 2010' in lc: rename[c]='idhm_renda_2010'
-              elif 'idhm longevidade 2010' in lc: rename[c]='idhm_longevidade_2010'
-              elif 'idhm educacao 2010' in lc: rename[c]='idhm_educacao_2010'
-              elif lc=='idhm 2010': rename[c]='idhm_2010'
-              elif 'ranking idhm 2010' in lc: rename[c]='ranking_idhm_2010'
-          idhm=idhm.rename(columns=rename)
-          keep=['cod_ibge_7','municipio_ibge','idhm_2010','idhm_renda_2010','idhm_longevidade_2010','idhm_educacao_2010','ranking_idhm_2010']
-          for c in keep:
-              if c not in idhm.columns: idhm[c]=None
-          idhm[keep].sort_values('cod_ibge_7').to_csv(OUT/'mg_853_idhm_2010.csv',index=False,encoding='utf-8-sig')
-          idhm_checks={'rows_mg':int(len(idhm)),'codes_matched':int(idhm['cod_ibge_7'].notna().sum()),'codes_unique':int(idhm['cod_ibge_7'].nunique()),'idhm_non_null':int(pd.to_numeric(idhm['idhm_2010'],errors='coerce').notna().sum())}
+          # IDHM: institutional API (SimCAQ/UFPR), whose source endpoint identifies Atlas/PNUD.
+          api='https://simcaq.c3sl.ufpr.br/api/v1'
+          indicators={'idhm':'idhm_2010','idhmr':'idhm_renda_2010','idhml':'idhm_longevidade_2010','idhme':'idhm_educacao_2010'}
+          merged=base_map[['cod_ibge_7','municipio']].copy()
+          idhm_meta=[]
+          for endpoint,target in indicators.items():
+              url=f'{api}/{endpoint}'
+              params={'dims':'city','filter':'state:31,min_year:2010,max_year:2010'}
+              r=get(url,params=params)
+              raw=OUT/f'{endpoint}_mg_2010_raw.json'; raw.write_bytes(r.content)
+              manifest.append({'file':raw.name,'source':r.url,'sha256':sha256(raw)})
+              obj=r.json(); records=obj.get('result',obj) if isinstance(obj,dict) else obj
+              if not isinstance(records,list): raise RuntimeError(f'Unexpected {endpoint} response: {type(records)}')
+              tab=pd.DataFrame(records)
+              idhm_meta.append({'endpoint':endpoint,'url':r.url,'rows':len(tab),'columns':list(tab.columns)})
+              code_col=next((c for c in tab.columns if norm(c) in ['city id','city_id','municipio id','municipality id']),None)
+              value_col=next((c for c in tab.columns if norm(c) in ['total','value','valor']),None)
+              year_col=next((c for c in tab.columns if norm(c)=='year'),None)
+              if code_col is None or value_col is None: raise RuntimeError(f'Could not map {endpoint} columns: {list(tab.columns)}')
+              t=tab.copy(); t['cod_ibge_7']=t[code_col].astype(str).str.replace(r'\.0$','',regex=True)
+              if year_col: t=t[pd.to_numeric(t[year_col],errors='coerce').eq(2010)]
+              t[target]=pd.to_numeric(t[value_col],errors='coerce')
+              t=t[['cod_ibge_7',target]].drop_duplicates('cod_ibge_7')
+              merged=merged.merge(t,on='cod_ibge_7',how='left')
+              try:
+                  src=get(f'{api}/{endpoint}/source').json()
+                  (OUT/f'{endpoint}_source.json').write_text(json.dumps(src,ensure_ascii=False,indent=2),encoding='utf-8')
+              except Exception: pass
+          merged['classe_idhm']=pd.cut(merged['idhm_2010'],bins=[-1,.499,.599,.699,.799,1],labels=['Muito baixo','Baixo','Médio','Alto','Muito alto'])
+          merged['fonte']='Atlas do Desenvolvimento Humano/PNUD, via API institucional SimCAQ/UFPR'
+          merged['ano_base']=2010
+          p=OUT/'mg_853_idhm_2010.csv'; merged.to_csv(p,index=False,encoding='utf-8-sig')
+          manifest.append({'file':p.name,'source':'https://simcaq.c3sl.ufpr.br/doc/','sha256':sha256(p)})
+          idhm_checks={'rows':len(merged),'codes_unique':int(merged.cod_ibge_7.nunique()),'idhm_non_null':int(merged.idhm_2010.notna().sum()),'renda_non_null':int(merged.idhm_renda_2010.notna().sum()),'longevidade_non_null':int(merged.idhm_longevidade_2010.notna().sum()),'educacao_non_null':int(merged.idhm_educacao_2010.notna().sum()),'api_meta':idhm_meta}
           (OUT/'idhm_checks.json').write_text(json.dumps(idhm_checks,ensure_ascii=False,indent=2),encoding='utf-8')
 
-          # IDSC public API
-          api='https://www.cidadessustentaveis.org.br/api/idsc-br/'
+          # IDSC public API discovery and extraction.
+          idsc='https://www.cidadessustentaveis.org.br/api/idsc-br/'
           endpoints=['buscarAllPerfilCidade','buscarAllPerfilCidadeDetalhes','buscarAllPerfilCidadeDetalhesPaginado','buscarPanoramaOdsCidades','buscarLabelsOds','buscarInfoIndicadorIdsc','buscarIndicadoresObservacoesIdsc']
-          summary=[]; endpoint_lists={}
+          endpoint_lists={}; summary=[]
           for ep in endpoints:
-              url=api+ep
+              url=idsc+ep
               try:
-                  r=get(url,300); text=r.text
-                  (OUT/f'idsc_{ep}.json').write_text(text,encoding='utf-8')
+                  r=get(url); raw=OUT/f'idsc_{ep}.json'; raw.write_bytes(r.content)
+                  manifest.append({'file':raw.name,'source':url,'sha256':sha256(raw)})
                   obj=r.json(); lod=lists_of_dicts(obj)
-                  summary.append({'endpoint':ep,'status':r.status_code,'bytes':len(r.content),'type':type(obj).__name__,'lists':[(p,len(v)) for p,v in lod]})
+                  summary.append({'endpoint':ep,'status':r.status_code,'bytes':len(r.content),'lists':[(a,len(b)) for a,b in lod]})
                   if lod: endpoint_lists[ep]=max(lod,key=lambda x:len(x[1]))[1]
               except Exception as e: summary.append({'endpoint':ep,'error':repr(e)})
           (OUT/'idsc_api_summary.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
-
-          # Select the richest city list and flatten it.
           selected_ep=None; records=[]
           for ep,lst in endpoint_lists.items():
               if len(lst)>len(records): selected_ep=ep; records=lst
-          if not records: raise RuntimeError('No IDSC city list found')
-          flat=pd.DataFrame([flatten(x) for x in records])
-          flat.to_csv(OUT/f'idsc_{selected_ep}_flat_all.csv',index=False,encoding='utf-8-sig')
-          cols=list(flat.columns)
-          code_cols=[c for c in cols if re.search(r'cod.*ibge|codigo.*ibge',norm(c))]
-          state_cols=[c for c in cols if norm(c).split()[-1:] in [['uf'],['estado'],['state'],['sigla']]]
-          name_cols=[c for c in cols if any(x in norm(c) for x in ['nome cidade','municipio','city name'])]
-          mask=pd.Series(False,index=flat.index)
-          for c in code_cols: mask |= flat[c].astype(str).str.replace(r'\.0$','',regex=True).str.startswith('31')
-          for c in state_cols: mask |= flat[c].astype(str).str.upper().eq('MG')
-          for c in name_cols: mask |= flat[c].astype(str).str.contains(r'\(MG\)\s*$',regex=True,na=False)
-          mg=flat[mask].copy()
-          mg.to_csv(OUT/'mg_idsc_profiles_flat.csv',index=False,encoding='utf-8-sig')
-          # Preserve a simple technical mapping to IBGE by normalized name when necessary.
-          if name_cols:
-              nc=name_cols[0]
-              mg['nome_idsc']=mg[nc].astype(str).str.replace(r'\s*\(MG\)\s*$','',regex=True)
-              mg['nome_norm']=mg['nome_idsc'].map(norm)
-              mg=mg.merge(base[['cod_ibge_7','municipio','nome_norm']],on='nome_norm',how='left')
-          elif code_cols:
-              cc=code_cols[0]; mg['cod_ibge_7']=mg[cc].astype(str).str.replace(r'\.0$','',regex=True)
-          mg.to_csv(OUT/'mg_853_idsc_base.csv',index=False,encoding='utf-8-sig')
-          idsc_checks={'selected_endpoint':selected_ep,'all_records':int(len(records)),'mg_records':int(len(mg)),'matched_codes':int(mg['cod_ibge_7'].notna().sum()) if 'cod_ibge_7' in mg else 0,'columns':list(mg.columns)}
-          (OUT/'idsc_checks.json').write_text(json.dumps(idsc_checks,ensure_ascii=False,indent=2),encoding='utf-8')
-          print(json.dumps({'idhm':idhm_checks,'idsc':idsc_checks},ensure_ascii=False,indent=2))
+          if not records:
+              (OUT/'idsc_checks.json').write_text(json.dumps({'status':'NO_CITY_LIST','summary':summary},ensure_ascii=False,indent=2),encoding='utf-8')
+              print(json.dumps({'idhm':idhm_checks,'idsc':'NO_CITY_LIST'},ensure_ascii=False,indent=2));
+          else:
+              flat=pd.DataFrame([flatten(x) for x in records])
+              flat.to_csv(OUT/f'idsc_{selected_ep}_flat_all.csv',index=False,encoding='utf-8-sig')
+              cols=list(flat.columns)
+              code_cols=[c for c in cols if re.search(r'(cod|codigo).*ibge|ibge.*(cod|codigo)',norm(c))]
+              state_cols=[c for c in cols if norm(c) in ['uf','estado','state','sigla uf','sigla estado']]
+              name_cols=[c for c in cols if any(x in norm(c) for x in ['nome cidade','nome municipio','municipio','city name'])]
+              mask=pd.Series(False,index=flat.index)
+              for c in code_cols: mask |= flat[c].astype(str).str.replace(r'\.0$','',regex=True).str.startswith('31')
+              for c in state_cols: mask |= flat[c].astype(str).str.upper().eq('MG')
+              for c in name_cols: mask |= flat[c].astype(str).str.contains(r'\(MG\)\s*$',regex=True,na=False)
+              mg=flat[mask].copy()
+              if code_cols:
+                  mg['cod_ibge_7']=mg[code_cols[0]].astype(str).str.replace(r'\.0$','',regex=True)
+              elif name_cols:
+                  mg['nome_idsc']=mg[name_cols[0]].astype(str).str.replace(r'\s*\(MG\)\s*$','',regex=True)
+                  mg['nome_norm']=mg['nome_idsc'].map(norm)
+                  mg=mg.merge(base_map,on='nome_norm',how='left')
+              # Enrich with per-city ODS and time series where an internal city id is identifiable.
+              id_cols=[c for c in mg.columns if norm(c) in ['id cidade','cidade id','id perfil cidade','perfil cidade id','id']]
+              ods_rows=[]; series_rows=[]
+              if id_cols and len(mg)<=900:
+                  ic=id_cols[0]
+                  for n,(_,row) in enumerate(mg.iterrows(),1):
+                      cid=str(row[ic]).replace('.0','')
+                      code=str(row.get('cod_ibge_7',''))
+                      for suffix,label,target in [(f'buscarInfoOdsPorCidade/{cid}','ods','ods'),(f'buscarSeriePontuacaoIdscPorCidade/{cid}','serie','serie')]:
+                          try:
+                              rr=get(idsc+suffix,120); obj=rr.json()
+                              rec={'cod_ibge_7':code,'id_cidade_idsc':cid,'payload':json.dumps(obj,ensure_ascii=False)}
+                              (ods_rows if label=='ods' else series_rows).append(rec)
+                          except Exception: pass
+              mg.to_csv(OUT/'mg_853_idsc_base.csv',index=False,encoding='utf-8-sig')
+              pd.DataFrame(ods_rows).to_csv(OUT/'mg_853_idsc_ods_payloads.csv',index=False,encoding='utf-8-sig')
+              pd.DataFrame(series_rows).to_csv(OUT/'mg_853_idsc_series_payloads.csv',index=False,encoding='utf-8-sig')
+              checks={'selected_endpoint':selected_ep,'all_records':len(records),'mg_records':len(mg),'matched_codes':int(mg.cod_ibge_7.notna().sum()) if 'cod_ibge_7' in mg else 0,'columns':list(mg.columns),'ods_payloads':len(ods_rows),'series_payloads':len(series_rows)}
+              (OUT/'idsc_checks.json').write_text(json.dumps(checks,ensure_ascii=False,indent=2),encoding='utf-8')
+              print(json.dumps({'idhm':idhm_checks,'idsc':checks},ensure_ascii=False,indent=2))
+
+          (OUT/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
           PY
           python mg853-p1-id/extract.py
       - name: Upload extraction artifact
