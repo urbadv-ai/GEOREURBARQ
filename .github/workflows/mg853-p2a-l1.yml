@@ -1,0 +1,372 @@
+name: MG 853 P2A Lote 1 Territorio e Censo
+
+on:
+  pull_request:
+    paths:
+      - 'mg853-p2a-l1/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '30 7 2 * *'
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pandas openpyxl requests beautifulsoup4 lxml geopandas pyogrio shapely pyarrow
+      - name: Collect, inspect and normalize official sources
+        shell: bash
+        run: |
+          mkdir -p mg853-p2a-l1/output/raw mg853-p2a-l1/output/normalized mg853-p2a-l1/output/audit
+          cat > mg853-p2a-l1/collect.py <<'PY'
+          from __future__ import annotations
+          import hashlib, io, json, os, re, shutil, unicodedata, zipfile
+          from pathlib import Path
+          from urllib.parse import urljoin, unquote
+
+          import pandas as pd
+          import requests
+          from bs4 import BeautifulSoup
+
+          ROOT = Path('mg853-p2a-l1/output')
+          RAW = ROOT / 'raw'; NORM = ROOT / 'normalized'; AUDIT = ROOT / 'audit'
+          for p in (RAW, NORM, AUDIT): p.mkdir(parents=True, exist_ok=True)
+
+          S = requests.Session()
+          S.headers.update({'User-Agent':'Mozilla/5.0 MG853-P2A-L1/1.0 official-data-collector','Accept-Language':'pt-BR,pt;q=0.9,en;q=0.5'})
+          MANIFEST=[]; REPORT={'generated_at_utc':pd.Timestamp.now('UTC').isoformat(),'sources':{},'checks':{}}
+
+          def sha256(path: Path) -> str:
+              h=hashlib.sha256()
+              with path.open('rb') as f:
+                  for chunk in iter(lambda:f.read(1024*1024),b''): h.update(chunk)
+              return h.hexdigest()
+
+          def get(url:str, timeout:int=300):
+              r=S.get(url,timeout=timeout,allow_redirects=True); r.raise_for_status(); return r
+
+          def download(url:str, name:str|None=None, timeout:int=600) -> Path:
+              name=name or unquote(url.rstrip('/').split('/')[-1])
+              path=RAW/name
+              with S.get(url,stream=True,timeout=timeout,allow_redirects=True) as r:
+                  r.raise_for_status()
+                  with path.open('wb') as f:
+                      for chunk in r.iter_content(1024*1024):
+                          if chunk: f.write(chunk)
+              MANIFEST.append({'file':str(path.relative_to(ROOT)),'source_url':url,'bytes':path.stat().st_size,'sha256':sha256(path)})
+              return path
+
+          def list_links(url:str):
+              r=get(url,180); soup=BeautifulSoup(r.text,'html.parser')
+              out=[]
+              for a in soup.find_all('a',href=True):
+                  href=a['href']
+                  if href.startswith('?') or href.startswith('/') or href in ('../','./'): continue
+                  out.append({'name':unquote(href.rstrip('/').split('/')[-1]),'url':urljoin(url,href),'href':href})
+              return out
+
+          def norm_text(x):
+              x='' if x is None else str(x)
+              x=unicodedata.normalize('NFKD',x).encode('ascii','ignore').decode().lower()
+              return re.sub(r'[^a-z0-9]+',' ',x).strip()
+
+          def detect_sep_encoding(path_or_bytes):
+              data = path_or_bytes.read_bytes()[:100000] if isinstance(path_or_bytes,Path) else path_or_bytes[:100000]
+              for enc in ('utf-8-sig','utf-8','latin1'):
+                  try:
+                      text=data.decode(enc)
+                      counts={s:text.count(s) for s in (';','|',',','\t')}
+                      return max(counts,key=counts.get),enc
+                  except Exception: pass
+              return ';','latin1'
+
+          def read_csv_from_zip(path:Path, member:str|None=None, nrows=None, chunksize=None):
+              with zipfile.ZipFile(path) as z:
+                  names=[n for n in z.namelist() if not n.endswith('/')]
+                  if member is None:
+                      cands=[n for n in names if n.lower().endswith(('.csv','.txt'))]
+                      member=cands[0] if cands else names[0]
+                  data=z.read(member)
+              sep,enc=detect_sep_encoding(data)
+              return pd.read_csv(io.BytesIO(data),sep=sep,encoding=enc,low_memory=False,nrows=nrows,chunksize=chunksize),member,sep,enc
+
+          def code_column(df:pd.DataFrame):
+              best=None; score=-1
+              for c in df.columns:
+                  s=df[c].dropna().astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+                  if not len(s): continue
+                  sc=s.str.fullmatch(r'\d{7}').mean()
+                  if sc>score: best,score=c,sc
+              return best,score
+
+          def inspect_zip(path:Path):
+              with zipfile.ZipFile(path) as z:
+                  return [{'member':n,'size':z.getinfo(n).file_size} for n in z.namelist() if not n.endswith('/')]
+
+          # ---------------------------------------------------------------
+          # 1. Malha Municipal Digital 2025 - MG
+          # ---------------------------------------------------------------
+          malha_url='https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2025/UFs/MG/MG_Municipios_2025.zip'
+          malha=download(malha_url)
+          pd.DataFrame(inspect_zip(malha)).to_csv(AUDIT/'malha_2025_zip_inventory.csv',index=False,encoding='utf-8-sig')
+          try:
+              import geopandas as gpd
+              shp=[m['member'] for m in inspect_zip(malha) if m['member'].lower().endswith('.shp')][0]
+              with zipfile.ZipFile(malha) as z: z.extractall(RAW/'malha_2025_unzipped')
+              gdf=gpd.read_file(RAW/'malha_2025_unzipped'/shp)
+              cd=next((c for c in gdf.columns if norm_text(c) in ('cd mun','cd geocmu','geocodigo','codigo municipio')),None)
+              if cd is None:
+                  for c in gdf.columns:
+                      s=gdf[c].dropna().astype(str)
+                      if len(s) and s.str.fullmatch(r'\d{7}').mean()>.9: cd=c; break
+              nm=next((c for c in gdf.columns if norm_text(c) in ('nm mun','nm municipio','nome municipio')),None)
+              gdf['cod_ibge_7']=gdf[cd].astype(str).str.replace(r'\.0$','',regex=True)
+              gdf['municipio']=gdf[nm].astype(str) if nm else ''
+              gdf=gdf[gdf['cod_ibge_7'].str.startswith('31')].copy()
+              gdf_proj=gdf.to_crs(5880)
+              gdf['perimetro_municipal_km_calc']=gdf_proj.length/1000
+              gdf[['cod_ibge_7','municipio','perimetro_municipal_km_calc']].to_csv(NORM/'MG_853_MALHA_MUNICIPAL_2025_ATRIBUTOS.csv',index=False,encoding='utf-8-sig')
+              gdf.to_file(NORM/'MG_853_MALHA_MUNICIPAL_2025.gpkg',layer='municipios_2025',driver='GPKG')
+              REPORT['sources']['malha_2025']={'url':malha_url,'rows':len(gdf),'unique_codes':int(gdf['cod_ibge_7'].nunique()),'crs':str(gdf.crs),'valid_geometries':int(gdf.geometry.is_valid.sum())}
+          except Exception as e:
+              REPORT['sources']['malha_2025']={'url':malha_url,'error':repr(e)}
+
+          # ---------------------------------------------------------------
+          # 2. Areas territoriais 2025
+          # ---------------------------------------------------------------
+          areas_url='https://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/areas_territoriais/2025/AR_BR_RG_UF_RGINT_RGI_MUN_2025.xls'
+          areas=download(areas_url)
+          axls=pd.ExcelFile(areas)
+          area_inv=[]; mg_area=None
+          for sh in axls.sheet_names:
+              raw=pd.read_excel(areas,sheet_name=sh,header=None,nrows=30)
+              best=(0,0)
+              for i,row in raw.iterrows():
+                  vals=[norm_text(v) for v in row.tolist()]
+                  sc=sum(any(k in v for k in ('codigo','geocodigo','municipio','area')) for v in vals)*100+sum(bool(v) for v in vals)
+                  if sc>best[0]: best=(sc,i)
+              try: tab=pd.read_excel(areas,sheet_name=sh,header=best[1])
+              except Exception as e: area_inv.append({'sheet':sh,'error':repr(e)}); continue
+              tab.columns=[str(c).strip() for c in tab.columns]
+              cc,cs=code_column(tab)
+              area_cols=[c for c in tab.columns if 'area' in norm_text(c)]
+              area_inv.append({'sheet':sh,'rows':len(tab),'cols':len(tab.columns),'header_row':best[1],'code_col':cc,'code_score':cs,'area_cols':' | '.join(map(str,area_cols))})
+              if cc and cs>.5:
+                  t=tab.copy(); t['cod_ibge_7']=t[cc].astype(str).str.replace(r'\.0$','',regex=True).str.strip(); t=t[t['cod_ibge_7'].str.startswith('31')]
+                  if len(t)>=800:
+                      ac=area_cols[-1] if area_cols else None
+                      if ac:
+                          t['area_oficial_km2_ref_2025']=pd.to_numeric(t[ac].astype(str).str.replace('.','',regex=False).str.replace(',','.',regex=False),errors='coerce')
+                          namec=next((c for c in t.columns if 'municipio' in norm_text(c) and c!=cc),None)
+                          t['municipio']=t[namec].astype(str) if namec else ''
+                          mg_area=t[['cod_ibge_7','municipio','area_oficial_km2_ref_2025']].drop_duplicates('cod_ibge_7')
+                          break
+          pd.DataFrame(area_inv).to_csv(AUDIT/'areas_2025_workbook_inventory.csv',index=False,encoding='utf-8-sig')
+          if mg_area is not None:
+              mg_area.to_csv(NORM/'MG_853_AREAS_TERRITORIAIS_2025.csv',index=False,encoding='utf-8-sig')
+              REPORT['sources']['areas_2025']={'url':areas_url,'rows':len(mg_area),'unique_codes':int(mg_area.cod_ibge_7.nunique()),'non_null_area':int(mg_area.area_oficial_km2_ref_2025.notna().sum())}
+          else: REPORT['sources']['areas_2025']={'url':areas_url,'error':'MG municipal table not detected'}
+
+          # ---------------------------------------------------------------
+          # 3. Entorno urbanistico - municipio, setor e percentuais
+          # ---------------------------------------------------------------
+          ent_base='https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Agregados_por_Setores_Censitarios_Caracteristicas_urbanisticas_do_entorno_dos_domicilios/'
+          ent_files={
+            'mun_domicilios':'Agregados_por_Municipio_csv/Agregados_por_municipios_entorno_domic%C3%ADlios_BR.zip',
+            'mun_faces':'Agregados_por_Municipio_csv/Agregados_por_municipios_entorno_faces_BR.zip',
+            'mun_moradores':'Agregados_por_Municipio_csv/Agregados_por_municipios_entorno_moradores_BR.zip',
+            'set_domicilios':'Agregados_por_Setor_csv/Agregados_por_setores_entorno_domic%C3%ADlios_BR.zip',
+            'set_faces':'Agregados_por_Setor_csv/Agregados_por_setores_entorno_faces_BR.zip',
+            'set_moradores':'Agregados_por_Setor_csv/Agregados_por_setores_entorno_moradores_BR.zip',
+            'dicionario':'dicionarios_de_dados_entorno.zip'
+          }
+          ent_paths={k:download(urljoin(ent_base,v),f'entorno_{k}.zip') for k,v in ent_files.items()}
+          ent_inv=[]; mun_tables=[]; set_outputs=[]
+          for key,path in ent_paths.items():
+              pd.DataFrame(inspect_zip(path)).to_csv(AUDIT/f'entorno_{key}_zip_inventory.csv',index=False,encoding='utf-8-sig')
+              if key=='dicionario': continue
+              try:
+                  df,member,sep,enc=read_csv_from_zip(path)
+                  cc,cs=code_column(df)
+                  ent_inv.append({'dataset':key,'member':member,'rows':len(df),'cols':len(df.columns),'code_col':cc,'code_score':cs,'sep':sep,'encoding':enc})
+                  if cc:
+                      df['cod_origem']=df[cc].astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+                      if key.startswith('mun_'):
+                          df['cod_ibge_7']=df['cod_origem'].str[:7]
+                          df=df[df['cod_ibge_7'].str.startswith('31')].copy()
+                          ren={c:f'{key}__{c}' for c in df.columns if c not in ('cod_ibge_7','cod_origem')}
+                          df=df.rename(columns=ren)
+                          mun_tables.append(df.drop(columns=['cod_origem'],errors='ignore').drop_duplicates('cod_ibge_7'))
+                      else:
+                          df['cod_setor']=df['cod_origem']
+                          df['cod_ibge_7']=df['cod_setor'].str[:7]
+                          df=df[df['cod_ibge_7'].str.startswith('31')].copy()
+                          out=NORM/f'MG_SETORES_ENTORNO_{key.upper()}.parquet'
+                          df.to_parquet(out,index=False)
+                          set_outputs.append({'dataset':key,'rows':len(df),'municipios':int(df.cod_ibge_7.nunique()),'file':out.name})
+              except Exception as e: ent_inv.append({'dataset':key,'error':repr(e)})
+          pd.DataFrame(ent_inv).to_csv(AUDIT/'entorno_datasets_inventory.csv',index=False,encoding='utf-8-sig')
+          pd.DataFrame(set_outputs).to_csv(AUDIT/'entorno_setor_coverage.csv',index=False,encoding='utf-8-sig')
+          if mun_tables:
+              merged=mun_tables[0]
+              for t in mun_tables[1:]: merged=merged.merge(t,on='cod_ibge_7',how='outer',validate='one_to_one')
+              merged.to_csv(NORM/'MG_853_ENTORNO_URBANO_2022_MUNICIPIO_COMPLETO.csv',index=False,encoding='utf-8-sig')
+              REPORT['sources']['entorno_municipio']={'rows':len(merged),'unique_codes':int(merged.cod_ibge_7.nunique()),'columns':len(merged.columns)}
+          REPORT['sources']['entorno_setor']=set_outputs
+
+          pct_url='https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Dados_percentuais_das_Caracteristicas_urbanisticas_do_entorno_dos_domicilios/br_setores_entorno_cd2022%28in%29.csv'
+          pct=download(pct_url,'br_setores_entorno_cd2022_percentuais.csv',900)
+          sep,enc=detect_sep_encoding(pct)
+          pct_chunks=[]; pct_rows=0
+          for chunk in pd.read_csv(pct,sep=sep,encoding=enc,low_memory=False,chunksize=150000):
+              cc,cs=code_column(chunk)
+              if not cc: continue
+              codes=chunk[cc].astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+              m=chunk[codes.str[:2].eq('31')].copy(); m['cod_setor']=codes[codes.str[:2].eq('31')]; m['cod_ibge_7']=m['cod_setor'].str[:7]
+              pct_chunks.append(m); pct_rows+=len(m)
+          if pct_chunks:
+              mgpct=pd.concat(pct_chunks,ignore_index=True)
+              mgpct.to_parquet(NORM/'MG_SETORES_ENTORNO_PERCENTUAIS_2022.parquet',index=False)
+              mgpct.head(1000).to_csv(AUDIT/'entorno_percentuais_preview.csv',index=False,encoding='utf-8-sig')
+              REPORT['sources']['entorno_percentuais']={'url':pct_url,'rows':len(mgpct),'unique_sectors':int(mgpct.cod_setor.nunique()),'municipios':int(mgpct.cod_ibge_7.nunique()),'columns':len(mgpct.columns)}
+
+          # dictionary extraction
+          dict_rows=[]
+          with zipfile.ZipFile(ent_paths['dicionario']) as z:
+              z.extractall(RAW/'entorno_dicionario')
+          for f in (RAW/'entorno_dicionario').rglob('*'):
+              if f.suffix.lower() in ('.xlsx','.xls','.ods'):
+                  try:
+                      x=pd.ExcelFile(f)
+                      for sh in x.sheet_names:
+                          t=pd.read_excel(f,sheet_name=sh,header=None)
+                          t.insert(0,'sheet',sh); t.insert(0,'file',f.name); dict_rows.append(t)
+                  except Exception: pass
+          if dict_rows:
+              pd.concat(dict_rows,ignore_index=True).to_csv(AUDIT/'entorno_dicionario_bruto.csv',index=False,encoding='utf-8-sig')
+
+          # ---------------------------------------------------------------
+          # 4. Agregados gerais por municipio/setor - discovery + selected
+          # ---------------------------------------------------------------
+          agg_base='https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Agregados_por_Setores_Censitarios/'
+          dirs={'municipio':'Agregados_por_Municipio_csv/','setor':'Agregados_por_Setor_csv/'}
+          agg_inventory=[]; selected=[]
+          for level,rel in dirs.items():
+              links=list_links(urljoin(agg_base,rel))
+              for item in links:
+                  if not item['name'].lower().endswith('.zip'): continue
+                  n=norm_text(item['name'])
+                  agg_inventory.append({'level':level,'name':item['name'],'url':item['url']})
+                  wanted = any(k in n for k in ('basico','rendimento','domicilio1','domicilios1'))
+                  if wanted: selected.append((level,item))
+          pd.DataFrame(agg_inventory).to_csv(AUDIT/'agregados_gerais_directory_inventory.csv',index=False,encoding='utf-8-sig')
+          agg_cov=[]
+          for level,item in selected:
+              path=download(item['url'],f'agg_{level}_{item["name"]}',900)
+              try:
+                  df,member,sep,enc=read_csv_from_zip(path)
+                  cc,cs=code_column(df)
+                  if cc:
+                      codes=df[cc].astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+                      if level=='municipio': mask=codes.str[:2].eq('31'); df=df[mask].copy(); df['cod_ibge_7']=codes[mask].str[:7]
+                      else: mask=codes.str[:2].eq('31'); df=df[mask].copy(); df['cod_setor']=codes[mask]; df['cod_ibge_7']=df['cod_setor'].str[:7]
+                      fn=f'MG_{level.upper()}_{Path(item["name"]).stem}.parquet'
+                      df.to_parquet(NORM/fn,index=False)
+                      agg_cov.append({'level':level,'name':item['name'],'rows':len(df),'municipios':int(df.cod_ibge_7.nunique()),'columns':len(df.columns),'file':fn,'code_col':cc})
+              except Exception as e: agg_cov.append({'level':level,'name':item['name'],'error':repr(e)})
+          pd.DataFrame(agg_cov).to_csv(AUDIT/'agregados_gerais_selected_coverage.csv',index=False,encoding='utf-8-sig')
+          REPORT['sources']['agregados_gerais']={'directory_files':len(agg_inventory),'selected':agg_cov}
+
+          # ---------------------------------------------------------------
+          # 5. Favelas e Comunidades Urbanas
+          # ---------------------------------------------------------------
+          fcu_xlsx_url='https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Favelas_e_comunidades_urbanas_Resultados_do_universo/Anexos/FavelaseComunidadesUrbanas2022Setores_20250417.xlsx'
+          fcu_xlsx=download(fcu_xlsx_url)
+          fcu_poly_url='https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Favelas_e_comunidades_urbanas_Resultados_do_universo/arquivos_vetoriais/poligonos_FCUs_shp.zip'
+          fcu_poly=download(fcu_poly_url)
+          fcu_vec_dir='https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Favelas_e_comunidades_urbanas_Resultados_do_universo/arquivos_vetoriais/'
+          for item in list_links(fcu_vec_dir):
+              n=norm_text(item['name'])
+              if 'nao setorizadas' in n and item['name'].lower().endswith(('.zip','.xlsx','.csv','.gpkg')):
+                  try: download(item['url'],item['name'],600)
+                  except Exception: pass
+          fxls=pd.ExcelFile(fcu_xlsx)
+          fcu_inv=[]; fcu_mg_parts=[]
+          for sh in fxls.sheet_names:
+              raw=pd.read_excel(fcu_xlsx,sheet_name=sh,header=None,nrows=35)
+              best=(0,0)
+              for i,row in raw.iterrows():
+                  vals=[norm_text(v) for v in row.tolist()]
+                  sc=sum(any(k in v for k in ('setor','codigo','municipio','favela','comunidade','populacao','domicilio')) for v in vals)*100+sum(bool(v) for v in vals)
+                  if sc>best[0]: best=(sc,i)
+              try: t=pd.read_excel(fcu_xlsx,sheet_name=sh,header=best[1]); t.columns=[str(c).strip() for c in t.columns]
+              except Exception as e: fcu_inv.append({'sheet':sh,'error':repr(e)}); continue
+              cc,cs=code_column(t)
+              fcu_inv.append({'sheet':sh,'rows':len(t),'columns':len(t.columns),'header_row':best[1],'code_col':cc,'code_score':cs,'column_names':' | '.join(map(str,t.columns))})
+              if cc:
+                  codes=t[cc].astype(str).str.replace(r'\.0$','',regex=True).str.strip(); m=t[codes.str[:2].eq('31')].copy(); m['cod_origem']=codes[codes.str[:2].eq('31')]; m['cod_ibge_7']=m['cod_origem'].str[:7]
+                  if len(m): m.insert(0,'sheet_origem',sh); fcu_mg_parts.append(m)
+          pd.DataFrame(fcu_inv).to_csv(AUDIT/'fcu_workbook_inventory.csv',index=False,encoding='utf-8-sig')
+          if fcu_mg_parts:
+              fmg=pd.concat(fcu_mg_parts,ignore_index=True,sort=False)
+              fmg.to_csv(NORM/'MG_FCU_SETORES_E_ATRIBUTOS_2022.csv',index=False,encoding='utf-8-sig')
+              REPORT['sources']['fcu_table']={'url':fcu_xlsx_url,'rows':len(fmg),'municipios':int(fmg.cod_ibge_7.nunique()),'columns':len(fmg.columns)}
+          try:
+              import geopandas as gpd
+              with zipfile.ZipFile(fcu_poly) as z: z.extractall(RAW/'fcu_poligonos')
+              shp=list((RAW/'fcu_poligonos').rglob('*.shp'))[0]
+              fg=gpd.read_file(shp)
+              code_candidates=[]
+              for c in fg.columns:
+                  s=fg[c].dropna().astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+                  if len(s):
+                      score=s.str.match(r'^31\d{5}').mean(); code_candidates.append((score,c))
+              cc=max(code_candidates)[1] if code_candidates else None
+              if cc:
+                  fg['cod_ibge_7']=fg[cc].astype(str).str.replace(r'\.0$','',regex=True).str.extract(r'(31\d{5})')[0]
+                  fg=fg[fg.cod_ibge_7.notna()].copy()
+              fg.to_file(NORM/'MG_FCU_POLIGONOS_2022.gpkg',layer='fcu_2022',driver='GPKG')
+              fgp=fg.to_crs(5880); fg['area_fcu_km2_calc']=fgp.area/1e6
+              fagg=fg.groupby('cod_ibge_7',dropna=False).agg(quantidade_poligonos_fcu=('cod_ibge_7','size'),area_fcu_km2_calc=('area_fcu_km2_calc','sum')).reset_index()
+              fagg.to_csv(NORM/'MG_853_FCU_RESUMO_ESPACIAL_2022.csv',index=False,encoding='utf-8-sig')
+              REPORT['sources']['fcu_vector']={'url':fcu_poly_url,'features_mg':len(fg),'municipios':int(fg.cod_ibge_7.nunique()),'valid_geometries':int(fg.geometry.is_valid.sum())}
+          except Exception as e: REPORT['sources']['fcu_vector']={'url':fcu_poly_url,'error':repr(e)}
+
+          # ---------------------------------------------------------------
+          # Final checks and manifest
+          # ---------------------------------------------------------------
+          checks=[]
+          for key,val in REPORT['sources'].items():
+              if isinstance(val,dict):
+                  rows=val.get('rows') or val.get('unique_codes') or val.get('municipios')
+                  checks.append({'source':key,'status':'ERROR' if 'error' in val else 'COLLECTED','metric':rows,'details':json.dumps(val,ensure_ascii=False)[:2000]})
+          pd.DataFrame(checks).to_csv(AUDIT/'p2a_l1_source_checks.csv',index=False,encoding='utf-8-sig')
+          (AUDIT/'manifest.json').write_text(json.dumps(MANIFEST,ensure_ascii=False,indent=2),encoding='utf-8')
+          (AUDIT/'p2a_l1_report.json').write_text(json.dumps(REPORT,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps({'manifest_files':len(MANIFEST),'sources':REPORT['sources']},ensure_ascii=False,indent=2))
+          PY
+          python mg853-p2a-l1/collect.py
+      - name: Upload normalized and audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-normalized-audit
+          path: |
+            mg853-p2a-l1/output/normalized
+            mg853-p2a-l1/output/audit
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload raw snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-snapshot
+          path: mg853-p2a-l1/output/raw
+          if-no-files-found: error
+          retention-days: 90
