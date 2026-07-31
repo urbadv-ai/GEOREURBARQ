@@ -1,0 +1,91 @@
+name: MG 853 P2A Lote 1 Finalize Canonical
+
+on:
+  pull_request:
+    paths:
+      - 'mg853-p2a-l1-finalize/**'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pandas numpy geopandas pyogrio shapely pyproj openpyxl xlrd
+      - name: Download normalized P2A artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mg853-p2a-l1-normalized-audit-v2
+          path: input/norm
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: urbadv-ai/GEOREURBARQ
+          run-id: 30509805450
+      - name: Download raw P2A artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-snapshot-v2
+          path: input/raw
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: urbadv-ai/GEOREURBARQ
+          run-id: 30509805450
+      - name: Download official Censo dictionary
+        uses: actions/download-artifact@v4
+        with:
+          name: mg853-p2a-l1-censo-dictionary
+          path: input/dict
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: urbadv-ai/GEOREURBARQ
+          run-id: 30510644763
+      - name: Build corrected canonical package and raw bundles
+        run: python mg853-p2a-l1-finalize/finalize.py
+      - name: Upload canonical package
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-canonical-v1
+          path: output/MG_853_P2A_LOTE1_CANONICO_V1_0.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload raw bundle 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-bundle-01
+          path: output/raw_bundles/P2A_LOTE1_SNAPSHOT_BRUTO_BUNDLE_01.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload raw bundle 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-bundle-02
+          path: output/raw_bundles/P2A_LOTE1_SNAPSHOT_BRUTO_BUNDLE_02.zip
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Upload raw bundle 03
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-bundle-03
+          path: output/raw_bundles/P2A_LOTE1_SNAPSHOT_BRUTO_BUNDLE_03.zip
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Upload raw bundle 04
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-bundle-04
+          path: output/raw_bundles/P2A_LOTE1_SNAPSHOT_BRUTO_BUNDLE_04.zip
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Upload reconstruction README
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-p2a-l1-raw-readme
+          path: output/raw_bundles/README_RECONSTRUCAO_E_MANIFESTO.txt
+          if-no-files-found: error
+          retention-days: 90
