@@ -1,0 +1,28 @@
+name: MG853 G5 L03 API catalog fast
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'mg853-g5-block1/imrs_api_catalog_fast.py'
+      - '.github/workflows/mg853-g5-l03-api-catalog-fast.yml'
+  workflow_dispatch:
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - run: python mg853-g5-block1/imrs_api_catalog_fast.py
+      - if: always()
+        run: zip -r MG853_G5_L03_API_CATALOG_FAST_20260807.zip mg853-g5-block1/output/G5-L03_API_CATALOG_FAST || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MG853_G5_L03_API_CATALOG_FAST_20260807
+          path: MG853_G5_L03_API_CATALOG_FAST_20260807.zip
+          if-no-files-found: warn
+          retention-days: 30
