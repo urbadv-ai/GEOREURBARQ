@@ -48,6 +48,21 @@ jobs:
           done
           echo "Source artifact not available after retries" >&2
           exit 2
+      - name: Apply controlled pipeline hotfix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('mg853-g5-l07/normalize_l07_component.py')
+          s=p.read_text(encoding='utf-8')
+          old="drop(columns='geometry')"
+          new="drop(columns='geometry',errors='ignore')"
+          n=s.count(old)
+          s=s.replace(old,new)
+          p.write_text(s,encoding='utf-8')
+          print(f'geometry-column hotfix occurrences: {n}')
+          if n < 1:
+              raise SystemExit('Expected geometry drop expression not found')
+          PY
       - name: Normalize component against IBGE municipal mesh 2025
         run: python mg853-g5-l07/normalize_l07_component.py --index ${{ matrix.idx }} --source-dir source_component
       - name: Package normalized contribution
