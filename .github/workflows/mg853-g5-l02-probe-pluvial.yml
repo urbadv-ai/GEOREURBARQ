@@ -1,0 +1,40 @@
+name: MG 853 G5 L02 Probe Pluvial
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/mg853-g5-l02-probe-pluvial.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Probe official RAR response
+        shell: bash
+        run: |
+          set -x
+          URL='https://www.gov.br/cidades/pt-br/acesso-a-informacao/acoes-e-programas/saneamento/sinisa/resultados-sinisa/SINISA_AGUASPLUVIAIS_PLANILHAS_2023_V224042025.rar'
+          curl -L --retry 5 --retry-all-errors --connect-timeout 30 --max-time 300 -D headers.txt -o pluvial.rar "$URL"
+          cat headers.txt
+          stat -c '%n %s bytes' pluvial.rar
+          sha256sum pluvial.rar
+          7z l pluvial.rar || true
+          7z t pluvial.rar || true
+          mkdir -p extract
+          7z x -y -oextract pluvial.rar || true
+          find extract -type f -printf '%p %s bytes\n'
+          for f in extract/*; do [ -f "$f" ] && (sha256sum "$f" || true); done
+      - name: Upload probe evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l02-pluvial-probe
+          path: |
+            headers.txt
+            pluvial.rar
+            extract
+          retention-days: 90
