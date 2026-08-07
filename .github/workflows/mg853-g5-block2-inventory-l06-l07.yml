@@ -1,0 +1,40 @@
+name: MG 853 G5 Bloco 2 Inventário L06 L07
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-block2/inventory_l06_l07.py'
+      - '.github/workflows/mg853-g5-block2-inventory-l06-l07.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    strategy:
+      fail-fast: false
+      matrix:
+        lot: [G5-L06, G5-L07]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LOT_ID: ${{ matrix.lot }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade requests beautifulsoup4 lxml
+      - run: python mg853-g5-block2/inventory_l06_l07.py
+      - if: always()
+        run: |
+          cat mg853-g5-block2/output/${LOT_ID}/resumo_l06.json || true
+          cat mg853-g5-block2/output/${LOT_ID}/resumo_l07.json || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-${{ matrix.lot }}-block2-inventory-20260807
+          path: mg853-g5-block2/output/${{ matrix.lot }}
+          if-no-files-found: error
+          retention-days: 90
