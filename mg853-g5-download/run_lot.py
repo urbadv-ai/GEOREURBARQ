@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import sys
 from pathlib import Path
 
 module_path = Path(__file__).with_name("collect_sources.py")
@@ -9,6 +10,7 @@ spec = importlib.util.spec_from_file_location("g5collector", module_path)
 if spec is None or spec.loader is None:
     raise RuntimeError("Nao foi possivel carregar o coletor G5")
 collector = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = collector
 spec.loader.exec_module(collector)
 
 collector.TIMEOUT = (15, 45)
@@ -32,7 +34,13 @@ collector.write_semantic_crosswalk()
 try:
     collectors[lot]()
 except Exception as exc:
-    collector.record_failure(lot, "DESCONHECIDA", "EXECUCAO_LOTE", "", exc,
-                             "Falha controlada no processo independente")
+    collector.record_failure(
+        lot,
+        "DESCONHECIDA",
+        "EXECUCAO_LOTE",
+        "",
+        exc,
+        "Falha controlada no processo independente",
+    )
 collector.finalize()
 print(f"FIM {lot}", flush=True)
