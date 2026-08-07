@@ -1,0 +1,67 @@
+name: MG853 G5 L07 normalize WFS components
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'mg853-g5-l07/normalize_l07_component.py'
+      - '.github/workflows/mg853-g5-l07-normalize-components.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  normalize:
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        idx: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SOURCE_RUN_ID: '31209868198'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install geospatial stack
+        run: pip install --disable-pip-version-check geopandas==1.1.2 shapely==2.1.2 pyogrio==0.12.1 pandas==2.2.3 requests
+      - name: Wait for and download exact source sub-snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="MG853_G5_L07_SUBSNAPSHOT_${{ matrix.idx }}_20260807"
+          mkdir -p source_component
+          for n in $(seq 1 45); do
+            if gh run download "$SOURCE_RUN_ID" -n "$NAME" --dir source_component; then
+              echo "Downloaded $NAME"
+              exit 0
+            fi
+            echo "Artifact $NAME not available yet; attempt $n/45"
+            rm -rf source_component/*
+            sleep 20
+          done
+          echo "Source artifact not available after retries" >&2
+          exit 2
+      - name: Normalize component against IBGE municipal mesh 2025
+        run: python mg853-g5-l07/normalize_l07_component.py --index ${{ matrix.idx }} --source-dir source_component
+      - name: Package normalized contribution
+        if: always()
+        run: |
+          mkdir -p packaged
+          if [ -d normalized_l07_components ]; then
+            zip -r packaged/L07_normalized_component_${{ matrix.idx }}.zip normalized_l07_components
+          fi
+      - name: Upload normalized component artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MG853_G5_L07_NORMALIZED_COMPONENT_${{ matrix.idx }}_V1_0
+          path: packaged/L07_normalized_component_${{ matrix.idx }}.zip
+          if-no-files-found: error
+          retention-days: 30
