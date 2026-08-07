@@ -1,0 +1,130 @@
+name: MG 853 G5 Download Integral de Fontes Oficiais
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-download/**'
+      - '.github/workflows/mg853-g5-source-download.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install controlled acquisition dependencies
+        run: python -m pip install --upgrade requests beautifulsoup4 lxml
+
+      - name: Download, inventory and hash official sources
+        run: python mg853-g5-download/collect_sources.py
+
+      - name: Display acquisition summary
+        if: always()
+        run: |
+          test -f mg853-g5-download/output/resumo_execucao.json && cat mg853-g5-download/output/resumo_execucao.json || true
+          test -f mg853-g5-download/output/erros_download.csv && cat mg853-g5-download/output/erros_download.csv || true
+
+      - name: Upload global acquisition governance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-download-governanca-20260806
+          path: |
+            mg853-g5-download/output/README_EXECUCAO.md
+            mg853-g5-download/output/manifesto_downloads.csv
+            mg853-g5-download/output/manifesto_downloads.json
+            mg853-g5-download/output/erros_download.csv
+            mg853-g5-download/output/correlacao_semantica_g5_l01_l09.csv
+            mg853-g5-download/output/resumo_execucao.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload G5-L01 acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l01-fontes-oficiais-20260806
+          path: mg853-g5-download/output/G5-L01
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload G5-L02 acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l02-fontes-oficiais-20260806
+          path: mg853-g5-download/output/G5-L02
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload G5-L03 acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l03-fontes-oficiais-20260806
+          path: mg853-g5-download/output/G5-L03
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload G5-L04 acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l04-fontes-oficiais-20260806
+          path: mg853-g5-download/output/G5-L04
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload G5-L05 acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l05-fontes-oficiais-20260806
+          path: mg853-g5-download/output/G5-L05
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload G5-L06 acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l06-fontes-oficiais-20260806
+          path: mg853-g5-download/output/G5-L06
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload G5-L07 acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l07-fontes-oficiais-20260806
+          path: mg853-g5-download/output/G5-L07
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload G5-L08 acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l08-fontes-oficiais-20260806
+          path: mg853-g5-download/output/G5-L08
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload G5-L09 acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l09-fontes-oficiais-20260806
+          path: mg853-g5-download/output/G5-L09
+          if-no-files-found: error
+          retention-days: 90
