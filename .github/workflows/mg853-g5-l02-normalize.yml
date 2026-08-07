@@ -1,0 +1,47 @@
+name: MG 853 G5 L02 Normalização SINISA
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-normalize-l02/normalize_l02.py'
+      - '.github/workflows/mg853-g5-l02-normalize.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Execute bounded SINISA normalization
+        run: python mg853-g5-normalize-l02/normalize_l02.py
+      - name: Show execution summary
+        if: always()
+        run: |
+          cat mg853-g5-normalize-l02/output_normalization/03_AUDITORIA/resumo_execucao.json || true
+          cat mg853-g5-normalize-l02/output_normalization/03_AUDITORIA/MG853_G5_L02_TESTES_V1_0.csv || true
+      - name: Upload normalized package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l02-normalizacao-v1-0-20260807
+          path: |
+            mg853-g5-normalize-l02/MG853_G5_L02_NORMALIZACAO_V1_0_20260807.zip
+            mg853-g5-normalize-l02/output_normalization/02_BASE_NORMALIZADA
+            mg853-g5-normalize-l02/output_normalization/03_AUDITORIA
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload operational subsnapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l02-subsnapshot-operacional-20260807
+          path: mg853-g5-normalize-l02/MG853_G5_L02_SUBSNAPSHOT_OPERACIONAL_20260807.zip
+          retention-days: 90
+          if-no-files-found: error
