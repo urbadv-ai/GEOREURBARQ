@@ -1,0 +1,46 @@
+name: MG 853 G5 Bloco 1 Normalizar L05 L09
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-block1/normalize_l05_l09.py'
+      - '.github/workflows/mg853-g5-block1-normalize-l05-l09.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  normalize:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        lot: [G5-L05, G5-L09]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      LOT_ID: ${{ matrix.lot }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade requests pandas openpyxl xlrd
+      - name: Normalize and audit lot
+        run: python mg853-g5-block1/normalize_l05_l09.py
+      - name: Show summary
+        if: always()
+        run: |
+          find mg853-g5-block1/normalized/${LOT_ID} -maxdepth 3 -type f -printf '%p %s bytes\n' || true
+          cat mg853-g5-block1/normalized/${LOT_ID}/resumo_execucao.json || true
+          cat mg853-g5-block1/normalized/${LOT_ID}/erro_execucao.json || true
+      - name: Upload normalized package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-${{ matrix.lot }}-normalized-v1-20260807
+          path: mg853-g5-block1/normalized/${{ matrix.lot }}
+          if-no-files-found: error
+          retention-days: 90
