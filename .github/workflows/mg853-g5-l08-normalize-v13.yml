@@ -32,3 +32,14 @@ jobs:
           path: mg853-g5-block2/normalized/G5-L08_V13
           if-no-files-found: error
           retention-days: 90
+      - if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-G5-L08-promocao-v1-3-20260807
+          path: |
+            mg853-g5-block2/normalized/G5-L08_V13/01_BASE_NORMALIZADA
+            mg853-g5-block2/normalized/G5-L08_V13/02_AUDITORIA
+            mg853-g5-block2/normalized/G5-L08_V13/resumo_execucao.json
+            mg853-g5-block2/normalized/G5-L08_V13/resumo_execucao_final.json
+          if-no-files-found: error
+          retention-days: 90
