@@ -1,0 +1,35 @@
+name: MG 853 G5 L04 RREO 2025 Estadual
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-block1/normalize_l04_rreo_2025.py'
+      - '.github/workflows/mg853-g5-l04-rreo-2025.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  normalize-2025:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade requests pandas
+      - name: Collect immutable RREO responses and normalize 2025 panel
+        run: python mg853-g5-block1/normalize_l04_rreo_2025.py
+      - if: always()
+        run: |
+          cat mg853-g5-block1/normalized/G5-L04_2025/resumo_execucao.json || true
+          du -sh mg853-g5-block1/normalized/G5-L04_2025 || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-G5-L04-RREO-2025-v0-1-20260807
+          path: mg853-g5-block1/normalized/G5-L04_2025
+          if-no-files-found: error
+          retention-days: 90
