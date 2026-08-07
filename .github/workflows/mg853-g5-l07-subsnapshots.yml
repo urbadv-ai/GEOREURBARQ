@@ -1,0 +1,42 @@
+name: MG853 G5 L07 integral WFS subsnapshots
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'mg853-g5-l07/download_l07_layer.py'
+      - '.github/workflows/mg853-g5-l07-subsnapshots.yml'
+  workflow_dispatch:
+
+jobs:
+  subsnapshot:
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        idx: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Download and validate integral WFS component
+        run: python mg853-g5-l07/download_l07_layer.py --index ${{ matrix.idx }}
+      - name: Package component
+        if: always()
+        run: |
+          mkdir -p packaged
+          if [ -d out_l07_subsnapshots ]; then
+            zip -r packaged/L07_component_${{ matrix.idx }}.zip out_l07_subsnapshots
+          fi
+      - name: Upload component artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MG853_G5_L07_SUBSNAPSHOT_${{ matrix.idx }}_20260807
+          path: packaged/L07_component_${{ matrix.idx }}.zip
+          if-no-files-found: error
+          retention-days: 30
