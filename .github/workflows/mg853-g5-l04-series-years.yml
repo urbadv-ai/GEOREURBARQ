@@ -1,0 +1,39 @@
+name: MG 853 G5 L04 Série RREO 2023 2024
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-block1/run_l04_year.py'
+      - '.github/workflows/mg853-g5-l04-series-years.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fiscal-year:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        year: [2023, 2024]
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      FISCAL_YEAR: ${{ matrix.year }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade requests pandas
+      - run: python mg853-g5-block1/run_l04_year.py
+      - if: always()
+        run: cat mg853-g5-block1/normalized/G5-L04_${FISCAL_YEAR}_V02/resumo_execucao_final.json || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-G5-L04-RREO-${{ matrix.year }}-v0-2-final-20260807
+          path: mg853-g5-block1/normalized/G5-L04_${{ matrix.year }}_V02
+          if-no-files-found: error
+          retention-days: 90
