@@ -1,0 +1,51 @@
+name: MG 853 G5 Reparação Controlada de Fontes
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-download/repair_l03_l07.py'
+      - '.github/workflows/mg853-g5-source-repairs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repair-source:
+    strategy:
+      fail-fast: false
+      matrix:
+        repair: [G5-L03, G5-L07]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      REPAIR_ID: ${{ matrix.repair }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install acquisition dependencies
+        run: python -m pip install --upgrade requests beautifulsoup4 lxml
+      - name: Repair official endpoint package
+        run: python mg853-g5-download/repair_l03_l07.py
+      - name: Show controlled repair results
+        if: always()
+        run: |
+          cat mg853-g5-download/output/resumo_execucao.json || true
+          cat mg853-g5-download/output/erros_download.csv || true
+      - name: Upload repaired official package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-${{ matrix.repair }}-fontes-oficiais-reparadas-20260806
+          path: |
+            mg853-g5-download/output/${{ matrix.repair }}
+            mg853-g5-download/output/manifesto_downloads.csv
+            mg853-g5-download/output/manifesto_downloads.json
+            mg853-g5-download/output/erros_download.csv
+            mg853-g5-download/output/correlacao_semantica_g5_l01_l09.csv
+            mg853-g5-download/output/resumo_execucao.json
+            mg853-g5-download/output/README_EXECUCAO.md
+          if-no-files-found: error
+          retention-days: 90
