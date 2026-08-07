@@ -1,0 +1,30 @@
+name: MG 853 G5 L04 Probe Instituições RREO
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-block1/probe_l04_instituicoes.py'
+      - '.github/workflows/mg853-g5-l04-probe-instituicoes.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade requests
+      - run: python mg853-g5-block1/probe_l04_instituicoes.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-G5-L04-probe-instituicoes-20260807
+          path: mg853-g5-block1/probes/G5-L04_INSTITUICOES
+          if-no-files-found: error
+          retention-days: 90
