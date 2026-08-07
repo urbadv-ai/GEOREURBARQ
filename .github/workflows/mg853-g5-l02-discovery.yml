@@ -1,0 +1,29 @@
+name: MG 853 G5 L02 SINISA Discovery
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-normalize-l02/discover_latest_sinisa.py'
+      - '.github/workflows/mg853-g5-l02-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download and inspect latest official SINISA package
+        run: python mg853-g5-normalize-l02/discover_latest_sinisa.py
+      - name: Upload discovery evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l02-sinisa-ref2024-discovery
+          path: mg853-g5-normalize-l02/discovery_output
+          retention-days: 90
