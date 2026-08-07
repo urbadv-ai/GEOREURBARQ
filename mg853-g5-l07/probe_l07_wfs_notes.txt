@@ -1,0 +1,1 @@
+Execution notes: first pass freezes schema/cardinality/sample only. Full paginated sub-snapshot is conditioned on measured feature counts; no truncation is permitted.
