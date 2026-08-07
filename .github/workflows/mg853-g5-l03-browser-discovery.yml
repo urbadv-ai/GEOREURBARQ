@@ -1,0 +1,34 @@
+name: MG853 G5 L03 browser discovery
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'mg853-g5-block1/imrs_browser_discovery.py'
+      - '.github/workflows/mg853-g5-l03-browser-discovery.yml'
+  workflow_dispatch:
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install playwright
+      - run: playwright install --with-deps chromium
+      - name: Discover current IMRS network/API routes
+        run: python mg853-g5-block1/imrs_browser_discovery.py
+      - name: Package discovery
+        if: always()
+        run: zip -r MG853_G5_L03_BROWSER_DISCOVERY_20260807.zip mg853-g5-block1/output/G5-L03_BROWSER || true
+      - name: Upload discovery artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MG853_G5_L03_BROWSER_DISCOVERY_20260807
+          path: MG853_G5_L03_BROWSER_DISCOVERY_20260807.zip
+          if-no-files-found: warn
+          retention-days: 30
