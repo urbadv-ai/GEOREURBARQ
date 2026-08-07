@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'mg853-g5-normalize-l01/normalize_l01.py'
+      - 'mg853-g5-normalize-l01/run_normalize_l01.py'
       - '.github/workflows/mg853-g5-l01-normalize.yml'
   workflow_dispatch:
 
@@ -20,19 +21,24 @@ jobs:
         with:
           python-version: '3.12'
       - name: Normalize G5-L01 with official municipal aggregates
-        run: python mg853-g5-normalize-l01/normalize_l01.py
+        run: python mg853-g5-normalize-l01/run_normalize_l01.py
       - name: Show execution summary
         if: always()
         run: |
           cat mg853-g5-normalize-l01/output_normalization/resumo_execucao.json || true
           cat mg853-g5-normalize-l01/output_normalization/02_AUDITORIA/MG853_G5_L01_TESTES_V1_0.csv || true
-      - name: Upload complete normalization evidence
+      - name: Upload compact normalization evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mg853-g5-l01-normalizacao-v1-0-20260807
           path: |
-            mg853-g5-normalize-l01/output_normalization
             mg853-g5-normalize-l01/MG853_G5_L01_NORMALIZACAO_V1_0_20260807.zip
+            mg853-g5-normalize-l01/output_normalization/01_BASE_NORMALIZADA
+            mg853-g5-normalize-l01/output_normalization/02_AUDITORIA
+            mg853-g5-normalize-l01/output_normalization/README_NORMALIZACAO.md
+            mg853-g5-normalize-l01/output_normalization/resumo_execucao.json
+            mg853-g5-normalize-l01/output_normalization/manifesto_normalizacao.csv
+            mg853-g5-normalize-l01/output_normalization/manifesto_normalizacao.json
           if-no-files-found: error
           retention-days: 90
