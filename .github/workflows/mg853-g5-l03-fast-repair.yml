@@ -1,0 +1,41 @@
+name: MG 853 G5 L03 Reparação IMRS Atual
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-download/repair_l03_fast.py'
+      - '.github/workflows/mg853-g5-l03-fast-repair.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repair-l03:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade requests beautifulsoup4 lxml
+      - run: python mg853-g5-download/repair_l03_fast.py
+      - if: always()
+        run: |
+          cat mg853-g5-download/output/resumo_execucao.json || true
+          cat mg853-g5-download/output/erros_download.csv || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-G5-L03-fontes-oficiais-vigentes-20260806
+          path: |
+            mg853-g5-download/output/G5-L03
+            mg853-g5-download/output/manifesto_downloads.csv
+            mg853-g5-download/output/manifesto_downloads.json
+            mg853-g5-download/output/erros_download.csv
+            mg853-g5-download/output/correlacao_semantica_g5_l01_l09.csv
+            mg853-g5-download/output/resumo_execucao.json
+            mg853-g5-download/output/README_EXECUCAO.md
+          if-no-files-found: error
+          retention-days: 90
