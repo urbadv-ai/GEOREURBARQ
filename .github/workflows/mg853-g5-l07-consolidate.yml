@@ -1,0 +1,69 @@
+name: MG853 G5 L07 consolidate statewide layer
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'mg853-g5-l07/consolidate_l07.py'
+      - '.github/workflows/mg853-g5-l07-consolidate.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      SOURCE_RUN_ID: '31211283205'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install --disable-pip-version-check pandas==2.2.3
+      - name: Wait for all 19 approved component artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p normalized_inputs
+          for IDX in $(seq 0 18); do
+            NAME="MG853_G5_L07_NORMALIZED_COMPONENT_${IDX}_V1_0"
+            mkdir -p "normalized_inputs/${IDX}"
+            ok=0
+            for n in $(seq 1 180); do
+              if gh run download "$SOURCE_RUN_ID" -n "$NAME" --dir "normalized_inputs/${IDX}"; then
+                echo "Downloaded $NAME"
+                ok=1
+                break
+              fi
+              rm -rf "normalized_inputs/${IDX}"/*
+              echo "Waiting $NAME attempt $n/180"
+              sleep 20
+            done
+            if [ "$ok" -ne 1 ]; then
+              echo "Missing $NAME" >&2
+              exit 2
+            fi
+          done
+      - name: Freeze artifact metadata
+        run: gh api "repos/${{ github.repository }}/actions/runs/${SOURCE_RUN_ID}/artifacts?per_page=100" > normalized_inputs/source_run_artifacts.json
+      - name: Consolidate and audit
+        run: python mg853-g5-l07/consolidate_l07.py
+      - name: Package promotion candidate
+        if: always()
+        run: |
+          zip -r MG853_G5_L07_PROMOCAO_V1_0_20260807.zip out_l07_consolidated || true
+      - name: Upload promotion candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MG853_G5_L07_PROMOCAO_V1_0_20260807
+          path: |
+            MG853_G5_L07_PROMOCAO_V1_0_20260807.zip
+            out_l07_consolidated/
+          if-no-files-found: warn
+          retention-days: 30
