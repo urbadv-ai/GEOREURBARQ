@@ -19,11 +19,11 @@ jobs:
       - run: playwright install --with-deps chromium
       - run: python mg853-g5-block1/imrs_selected_values_snapshot.py
       - if: always()
-        run: zip -r MG853_G5_L03_SELECTED_VALUES_SNAPSHOT_20260807.zip mg853-g5-block1/output/G5-L03_SELECTED_VALUES || true
+        run: zip -r MG853_G5_L03_SELECTED_VALUES_SNAPSHOT_V2_20260807.zip mg853-g5-block1/output/G5-L03_SELECTED_VALUES_V2 || true
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: MG853_G5_L03_SELECTED_VALUES_SNAPSHOT_20260807
-          path: MG853_G5_L03_SELECTED_VALUES_SNAPSHOT_20260807.zip
+          name: MG853_G5_L03_SELECTED_VALUES_SNAPSHOT_V2_20260807
+          path: MG853_G5_L03_SELECTED_VALUES_SNAPSHOT_V2_20260807.zip
           if-no-files-found: warn
           retention-days: 30
