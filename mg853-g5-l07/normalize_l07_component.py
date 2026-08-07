@@ -46,8 +46,7 @@ def extract_nested(source:Path, work:Path):
                     zz.extractall(work/'component')
                     raw=list((work/'component').rglob('raw_wfs_shape.zip'))
                     if raw: return raw[0]
-        except zipfile.BadZipFile:
-            pass
+        except zipfile.BadZipFile: pass
     raw=list(source.rglob('raw_wfs_shape.zip'))
     if raw: return raw[0]
     raise RuntimeError('raw_wfs_shape.zip nao localizado')
@@ -73,69 +72,56 @@ def get_mun(work:Path):
     code=next((c for c in m.columns if c.upper() in {'CD_MUN','CD_GEOCMU','CD_MUNICIP','CD_MUNICIPIO'} or ('CD_' in c.upper() and 'MUN' in c.upper())),None)
     name=next((c for c in m.columns if c.upper() in {'NM_MUN','NM_MUNICIP','NM_MUNICIPIO'} or ('NM_' in c.upper() and 'MUN' in c.upper())),None)
     if not code: raise RuntimeError('Chave municipal ausente')
-    m['cod_ibge_7']=m[code].astype(str).str.extract(r'(\d{7})',expand=False)
-    m['municipio']=m[name].astype(str) if name else ''
+    m['cod_ibge_7']=m[code].astype(str).str.extract(r'(\d{7})',expand=False); m['municipio']=m[name].astype(str) if name else ''
     m=m[['cod_ibge_7','municipio','geometry']].drop_duplicates('cod_ibge_7')
     if len(m)!=853 or m.cod_ibge_7.nunique()!=853: raise RuntimeError(f'Malha invalida: {len(m)}')
     return m
 
-def repair(g:gpd.GeoDataFrame):
+def repair(g:gpd.GeoDataFrame, polygonal=False):
     x=g.copy().reset_index(drop=True)
     x.geometry=x.geometry.apply(lambda v: shapely.force_2d(v) if v is not None else None)
-    bad=(~x.geometry.is_valid)&x.geometry.notna()
-    before=int(bad.sum())
-    if before: x.loc[bad,'geometry']=x.loc[bad,'geometry'].apply(shapely.make_valid)
+    bad=(~x.geometry.is_valid)&x.geometry.notna(); before=int(bad.sum())
+    if before:
+        if polygonal:
+            x.loc[bad,'geometry']=x.loc[bad,'geometry'].apply(lambda v: shapely.make_valid(v,method='structure',keep_collapsed=False))
+        else:
+            x.loc[bad,'geometry']=x.loc[bad,'geometry'].apply(shapely.make_valid)
     after=int(((~x.geometry.is_valid)&x.geometry.notna()).sum())
     return x,before,after
 
 def maybe_swap_wfs_axes(g:gpd.GeoDataFrame):
-    """GeoServer SHAPE-ZIP for EPSG:4674 may serialize native lat/lon axis order.
-    Detect only the unmistakable MG pattern and swap in the treated copy. Raw WFS stays untouched.
-    """
-    b=g.total_bounds
-    # Swapped MG: X resembles latitude (-24..-14) and Y resembles longitude (-52..-39).
-    swap=bool(b[0] > -30 and b[2] < -10 and b[1] < -35 and b[3] < -30)
-    original=[float(x) for x in b]
+    b=g.total_bounds; swap=bool(b[0] > -30 and b[2] < -10 and b[1] < -35 and b[3] < -30); original=[float(x) for x in b]
     if swap:
-        g=g.copy()
-        g.geometry=g.geometry.apply(lambda geom: shapely.transform(geom, lambda coords: coords[:, ::-1]) if geom is not None else None)
+        g=g.copy(); g.geometry=g.geometry.apply(lambda geom: shapely.transform(geom,lambda coords:coords[:,::-1]) if geom is not None else None)
     return g,swap,original,[float(x) for x in g.total_bounds]
 
 def polygon_intersections(src,munp):
     pairs=gpd.sjoin(src,munp[['cod_ibge_7','municipio','geometry']],how='inner',predicate='intersects')
     if pairs.empty:
-        p=pairs.copy(); p['area_ha']=pd.Series(dtype=float)
-        return p
-    left=pairs.geometry.reset_index(drop=True)
-    right=munp.geometry.reindex(pairs['index_right'].to_numpy()).reset_index(drop=True)
-    geom=shapely.intersection(left.array,right.array,grid_size=0.01)
-    area=shapely.area(geom)/10000
-    keep=(~shapely.is_empty(geom)) & (area>0)
-    p=pairs.reset_index(drop=True).loc[keep].copy()
-    p['geometry']=geom[keep]; p['area_ha']=area[keep]
+        p=pairs.copy(); p['area_ha']=pd.Series(dtype=float); return p
+    left=pairs.geometry.reset_index(drop=True); right=munp.geometry.reindex(pairs['index_right'].to_numpy()).reset_index(drop=True)
+    geom=shapely.intersection(left.array,right.array,grid_size=0.01); area=shapely.area(geom)/10000
+    keep=(~shapely.is_empty(geom))&(area>0); p=pairs.reset_index(drop=True).loc[keep].copy(); p['geometry']=geom[keep]; p['area_ha']=area[keep]
     return gpd.GeoDataFrame(p,geometry='geometry',crs=AREA_CRS)
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument('--index',type=int,required=True); ap.add_argument('--source-dir',default='source_component'); args=ap.parse_args()
     idx=args.index; logical,group,layer,tag=LAYERS[idx]
-    root=Path('normalized_l07_components')/f'{idx:02d}_{tag}'; root.mkdir(parents=True,exist_ok=True)
-    work=root/'work'; work.mkdir(exist_ok=True)
-    raw=extract_nested(Path(args.source_dir),work)
-    src=read_shp_zip(raw,work)
+    root=Path('normalized_l07_components')/f'{idx:02d}_{tag}'; root.mkdir(parents=True,exist_ok=True); work=root/'work'; work.mkdir(exist_ok=True)
+    raw=extract_nested(Path(args.source_dir),work); src=read_shp_zip(raw,work)
     source_rows=len(src); source_crs=str(src.crs); source_epsg=src.crs.to_epsg() if src.crs else None
     if src.crs is None: raise RuntimeError('CRS fonte ausente')
     if source_epsg!=4674: src=src.to_crs(4674)
     src,axis_swap,bounds_raw,bounds_treated=maybe_swap_wfs_axes(src)
-    src,bad0,bad1=repair(src)
-    mun=get_mun(work); mun,badm0,badm1=repair(mun)
+    src,bad0,bad1=repair(src,polygonal=(idx!=5)); mun=get_mun(work); mun,badm0,badm1=repair(mun,polygonal=True)
     srcp=src.to_crs(AREA_CRS); munp=mun.to_crs(AREA_CRS)
     badproj=int(((~srcp.geometry.is_valid)&srcp.geometry.notna()).sum())
     if badproj:
-        srcp.loc[(~srcp.geometry.is_valid)&srcp.geometry.notna(),'geometry']=srcp.loc[(~srcp.geometry.is_valid)&srcp.geometry.notna(),'geometry'].apply(shapely.make_valid)
+        if idx!=5: srcp.loc[(~srcp.geometry.is_valid)&srcp.geometry.notna(),'geometry']=srcp.loc[(~srcp.geometry.is_valid)&srcp.geometry.notna(),'geometry'].apply(lambda v: shapely.make_valid(v,method='structure',keep_collapsed=False))
+        else: srcp.loc[(~srcp.geometry.is_valid)&srcp.geometry.notna(),'geometry']=srcp.loc[(~srcp.geometry.is_valid)&srcp.geometry.notna(),'geometry'].apply(shapely.make_valid)
     badproj_after=int(((~srcp.geometry.is_valid)&srcp.geometry.notna()).sum())
     if bad1 or badm1 or badproj_after: raise RuntimeError('Geometria invalida apos reparo')
     munp['area_municipal_geom_ha']=munp.geometry.area/10000
-
     contribution=None; long=None; extra={}
     if idx<=4 or idx>=6:
         inter=polygon_intersections(srcp,munp)
@@ -143,61 +129,40 @@ def main():
         if idx in (0,1,2):
             vals=[]
             for code,m in munp.set_index('cod_ibge_7').iterrows():
-                g=inter[inter.cod_ibge_7.eq(code)]
-                area=float(shapely.area(shapely.union_all(g.geometry.array))/10000) if len(g) else 0.0
+                g=inter[inter.cod_ibge_7.eq(code)]; area=float(shapely.area(shapely.union_all(g.geometry.array))/10000) if len(g) else 0.0
                 vals.append({'cod_ibge_7':code,'municipio':m.municipio,f'uc_{tag}_presenca':int(len(g)>0),f'uc_{tag}_intersecoes':int(len(g)),f'uc_{tag}_area_unica_ha':area,'area_municipal_geom_ha':float(m.area_municipal_geom_ha)})
             contribution=pd.DataFrame(vals); contribution[f'uc_{tag}_pct_area']=100*contribution[f'uc_{tag}_area_unica_ha']/contribution.area_municipal_geom_ha
             attrs=[c for c in ['nome_uc','categoria','grupo','bioma','ato_legal','municipios','esfera','reg_ief'] if c in inter.columns]
             if attrs: long=inter[['cod_ibge_7','area_ha']+attrs].copy()
         elif idx==3:
-            sig=next((c for c in inter.columns if c.lower() in {'sigla','sigla_ch'}),None)
-            nome=next((c for c in inter.columns if c.lower() in {'nome','nm_ch','nome_ch'}),None)
-            key=sig or nome
+            sig=next((c for c in inter.columns if c.lower() in {'sigla','sigla_ch'}),None); nome=next((c for c in inter.columns if c.lower() in {'nome','nm_ch','nome_ch'}),None); key=sig or nome
             if not key: raise RuntimeError('Campo CH nao identificado')
             lg=inter.groupby(['cod_ibge_7',key],dropna=False).area_ha.sum().reset_index(); long=lg
-            principal=lg.sort_values(['cod_ibge_7','area_ha'],ascending=[True,False]).drop_duplicates('cod_ibge_7').rename(columns={key:'ch_principal','area_ha':'ch_principal_area_ha'})
-            cnt=lg.groupby('cod_ibge_7')[key].nunique(dropna=True).rename('ch_quantidade_intersectante').reset_index()
-            contribution=munp[['cod_ibge_7','municipio']].merge(cnt,on='cod_ibge_7',how='left').merge(principal[['cod_ibge_7','ch_principal','ch_principal_area_ha']],on='cod_ibge_7',how='left')
-            contribution=pd.DataFrame(contribution.drop(columns='geometry'))
-            contribution.ch_quantidade_intersectante=contribution.ch_quantidade_intersectante.fillna(0).astype(int); contribution['ch_presenca']=(contribution.ch_quantidade_intersectante>0).astype(int)
+            principal=lg.sort_values(['cod_ibge_7','area_ha'],ascending=[True,False]).drop_duplicates('cod_ibge_7').rename(columns={key:'ch_principal','area_ha':'ch_principal_area_ha'}); cnt=lg.groupby('cod_ibge_7')[key].nunique(dropna=True).rename('ch_quantidade_intersectante').reset_index()
+            contribution=munp[['cod_ibge_7','municipio']].merge(cnt,on='cod_ibge_7',how='left').merge(principal[['cod_ibge_7','ch_principal','ch_principal_area_ha']],on='cod_ibge_7',how='left'); contribution=pd.DataFrame(contribution.drop(columns='geometry')); contribution.ch_quantidade_intersectante=contribution.ch_quantidade_intersectante.fillna(0).astype(int); contribution['ch_presenca']=(contribution.ch_quantidade_intersectante>0).astype(int)
         elif idx==4:
             vals=[]
             for code,m in munp.set_index('cod_ibge_7').iterrows():
-                g=inter[inter.cod_ibge_7.eq(code)]
-                area=float(shapely.area(shapely.union_all(g.geometry.array))/10000) if len(g) else 0.0
+                g=inter[inter.cod_ibge_7.eq(code)]; area=float(shapely.area(shapely.union_all(g.geometry.array))/10000) if len(g) else 0.0
                 vals.append({'cod_ibge_7':code,'municipio':m.municipio,'restricao_hidrica_presenca':int(len(g)>0),'restricao_hidrica_area_unica_ha':area,'area_municipal_geom_ha':float(m.area_municipal_geom_ha)})
             contribution=pd.DataFrame(vals); contribution['restricao_hidrica_pct_area']=100*contribution.restricao_hidrica_area_unica_ha/contribution.area_municipal_geom_ha
             attrs=[c for c in ['setor','portigam','numdarc','nomtrecho','ch','area_km2'] if c in inter.columns]
             if attrs: long=inter[['cod_ibge_7','area_ha']+attrs].copy()
         else:
             if 'classe_' not in inter.columns: raise RuntimeError('Campo classe_ ausente no FIP-CAR')
-            long=inter.groupby(['cod_ibge_7','classe_'],dropna=False).area_ha.sum().reset_index()
-            tot=long.groupby('cod_ibge_7').area_ha.sum().rename(f'{tag}_area_mapeada_ha').reset_index()
-            contribution=munp[['cod_ibge_7','municipio','area_municipal_geom_ha']].merge(tot,on='cod_ibge_7',how='left')
-            contribution=pd.DataFrame(contribution.drop(columns='geometry'))
-            contribution[f'{tag}_area_mapeada_ha']=contribution[f'{tag}_area_mapeada_ha'].fillna(0.0); contribution[f'{tag}_pct_mapeado']=100*contribution[f'{tag}_area_mapeada_ha']/contribution.area_municipal_geom_ha
-            extra['classes']=sorted([str(x) for x in long.classe_.dropna().unique()]); extra['intersections']=len(inter)
+            long=inter.groupby(['cod_ibge_7','classe_'],dropna=False).area_ha.sum().reset_index(); tot=long.groupby('cod_ibge_7').area_ha.sum().rename(f'{tag}_area_mapeada_ha').reset_index()
+            contribution=munp[['cod_ibge_7','municipio','area_municipal_geom_ha']].merge(tot,on='cod_ibge_7',how='left'); contribution=pd.DataFrame(contribution.drop(columns='geometry')); contribution[f'{tag}_area_mapeada_ha']=contribution[f'{tag}_area_mapeada_ha'].fillna(0.0); contribution[f'{tag}_pct_mapeado']=100*contribution[f'{tag}_area_mapeada_ha']/contribution.area_municipal_geom_ha; extra['classes']=sorted([str(x) for x in long.classe_.dropna().unique()]); extra['intersections']=len(inter)
     else:
-        pts=srcp
-        pairs=gpd.sjoin(pts,munp[['cod_ibge_7','municipio','geometry']],how='left',predicate='within')
-        unresolved=pairs.cod_ibge_7.isna()
+        pts=srcp; pairs=gpd.sjoin(pts,munp[['cod_ibge_7','municipio','geometry']],how='left',predicate='within'); unresolved=pairs.cod_ibge_7.isna()
         if unresolved.any():
-            unresolved_idx=pairs.loc[unresolved].index.unique()
-            fb=gpd.sjoin(pts.loc[unresolved_idx],munp[['cod_ibge_7','municipio','geometry']],how='left',predicate='intersects')
-            pairs=pd.concat([pairs.loc[~unresolved].copy(),fb],ignore_index=False)
-        class_col=next((c for c in pairs.columns if c.lower() in {'classif','classificacao','classific'}),None)
-        assigned=pairs[pairs.cod_ibge_7.notna()].copy()
-        base=assigned.groupby('cod_ibge_7').size().rename('acr_pontos_total').reset_index()
-        contribution=munp[['cod_ibge_7','municipio']].merge(base,on='cod_ibge_7',how='left'); contribution=pd.DataFrame(contribution.drop(columns='geometry'))
-        contribution.acr_pontos_total=contribution.acr_pontos_total.fillna(0).astype(int); contribution['acr_presenca']=(contribution.acr_pontos_total>0).astype(int)
+            unresolved_idx=pairs.loc[unresolved].index.unique(); fb=gpd.sjoin(pts.loc[unresolved_idx],munp[['cod_ibge_7','municipio','geometry']],how='left',predicate='intersects'); pairs=pd.concat([pairs.loc[~unresolved].copy(),fb],ignore_index=False)
+        class_col=next((c for c in pairs.columns if c.lower() in {'classif','classificacao','classific'}),None); assigned=pairs[pairs.cod_ibge_7.notna()].copy(); base=assigned.groupby('cod_ibge_7').size().rename('acr_pontos_total').reset_index()
+        contribution=munp[['cod_ibge_7','municipio']].merge(base,on='cod_ibge_7',how='left'); contribution=pd.DataFrame(contribution.drop(columns='geometry')); contribution.acr_pontos_total=contribution.acr_pontos_total.fillna(0).astype(int); contribution['acr_presenca']=(contribution.acr_pontos_total>0).astype(int)
         if class_col: long=assigned.groupby(['cod_ibge_7',class_col],dropna=False).size().rename('quantidade').reset_index().rename(columns={class_col:'classificacao_oficial'})
         extra['pontos_sem_municipio']=int(pairs.cod_ibge_7.isna().sum()); extra['registros_atribuicao']=int(len(assigned))
-
-    contribution['fonte_id']='F-006'; contribution['lote_id']='G5-L07'; contribution['componente_idx']=idx; contribution['componente_tag']=tag; contribution['data_extracao']=now(); contribution['versao_transformacao']='G5-L07-NORM-COMP-V1.0'
-    write_csv(contribution,root/'contribuicao_municipal.csv')
+    contribution['fonte_id']='F-006'; contribution['lote_id']='G5-L07'; contribution['componente_idx']=idx; contribution['componente_tag']=tag; contribution['data_extracao']=now(); contribution['versao_transformacao']='G5-L07-NORM-COMP-V1.0'; write_csv(contribution,root/'contribuicao_municipal.csv')
     if long is not None: write_csv(long,root/'tabela_longa.csv')
-    audit={'idx':idx,'logical_id':logical,'grupo':group,'layer_name':layer,'tag':tag,'source_rows':source_rows,'source_crs':source_crs,'source_epsg':source_epsg,'axis_swap_applied':axis_swap,'bounds_raw':bounds_raw,'bounds_treated':bounds_treated,'invalid_source_before':bad0,'invalid_source_after':bad1,'invalid_projected_before':badproj,'invalid_projected_after':badproj_after,'municipios':int(contribution.cod_ibge_7.nunique()),'linhas_contribuicao':len(contribution),'extra':extra,'status':'APROVADO' if contribution.cod_ibge_7.nunique()==853 and len(contribution)==853 else 'BLOQUEADO','regra_semantica':'Componente contextual; nenhuma métrica representa desempenho, regularidade jurídica, dano ou risco por si só.'}
-    (root/'auditoria_componente.json').write_text(json.dumps(audit,ensure_ascii=False,indent=2),encoding='utf-8')
+    audit={'idx':idx,'logical_id':logical,'grupo':group,'layer_name':layer,'tag':tag,'source_rows':source_rows,'source_crs':source_crs,'source_epsg':source_epsg,'axis_swap_applied':axis_swap,'bounds_raw':bounds_raw,'bounds_treated':bounds_treated,'invalid_source_before':bad0,'invalid_source_after':bad1,'invalid_projected_before':badproj,'invalid_projected_after':badproj_after,'municipios':int(contribution.cod_ibge_7.nunique()),'linhas_contribuicao':len(contribution),'extra':extra,'status':'APROVADO' if contribution.cod_ibge_7.nunique()==853 and len(contribution)==853 else 'BLOQUEADO','regra_semantica':'Componente contextual; nenhuma métrica representa desempenho, regularidade jurídica, dano ou risco por si só.'}; (root/'auditoria_componente.json').write_text(json.dumps(audit,ensure_ascii=False,indent=2),encoding='utf-8')
     if audit['status']=='APROVADO': shutil.rmtree(work,ignore_errors=True)
     print(json.dumps(audit,ensure_ascii=False,indent=2))
     if audit['status']!='APROVADO': raise SystemExit(2)
