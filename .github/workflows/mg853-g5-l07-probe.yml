@@ -1,0 +1,36 @@
+name: MG853 G5 L07 WFS probe
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'mg853-g5-l07/probe_l07_wfs.py'
+      - '.github/workflows/mg853-g5-l07-probe.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Probe 19 admitted IDE-Sisema WFS components
+        run: python mg853-g5-l07/probe_l07_wfs.py
+      - name: Package probe
+        if: always()
+        run: |
+          zip -r MG853_G5_L07_PROBE_WFS_20260807.zip out_l07_probe || true
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MG853_G5_L07_PROBE_WFS_20260807
+          path: |
+            MG853_G5_L07_PROBE_WFS_20260807.zip
+            out_l07_probe/
+          if-no-files-found: warn
+          retention-days: 30
