@@ -1,0 +1,59 @@
+name: MG 853 G5 Aquisição Oficial por Lote
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-download/run_lot.py'
+      - 'mg853-g5-download/collect_sources.py'
+      - '.github/workflows/mg853-g5-source-download-matrix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-lot:
+    strategy:
+      fail-fast: false
+      max-parallel: 9
+      matrix:
+        lot: [G5-L01, G5-L02, G5-L03, G5-L04, G5-L05, G5-L06, G5-L07, G5-L08, G5-L09]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      LOT_ID: ${{ matrix.lot }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install acquisition dependencies
+        run: python -m pip install --upgrade requests beautifulsoup4 lxml
+
+      - name: Acquire official source for thematic lot
+        run: python mg853-g5-download/run_lot.py
+
+      - name: Show lot manifest and controlled failures
+        if: always()
+        run: |
+          echo "LOT=${LOT_ID}"
+          test -f mg853-g5-download/output/resumo_execucao.json && cat mg853-g5-download/output/resumo_execucao.json || true
+          test -f mg853-g5-download/output/erros_download.csv && cat mg853-g5-download/output/erros_download.csv || true
+
+      - name: Upload acquisition package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-${{ matrix.lot }}-fontes-oficiais-20260806
+          path: |
+            mg853-g5-download/output/${{ matrix.lot }}
+            mg853-g5-download/output/manifesto_downloads.csv
+            mg853-g5-download/output/manifesto_downloads.json
+            mg853-g5-download/output/erros_download.csv
+            mg853-g5-download/output/correlacao_semantica_g5_l01_l09.csv
+            mg853-g5-download/output/resumo_execucao.json
+            mg853-g5-download/output/README_EXECUCAO.md
+          if-no-files-found: error
+          retention-days: 90
