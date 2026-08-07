@@ -1,0 +1,32 @@
+name: MG 853 G5 L01 Dicionário Oficial IBGE
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-normalize-l01/extract_dictionary.py'
+      - '.github/workflows/mg853-g5-l01-dictionary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download and extract official IBGE dictionary
+        run: python mg853-g5-normalize-l01/extract_dictionary.py
+      - name: Show manifest
+        run: cat mg853-g5-normalize-l01/output_dictionary/manifesto_dicionario.json
+      - name: Upload dictionary package
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-g5-l01-dicionario-oficial-ibge-20260520
+          path: mg853-g5-normalize-l01/output_dictionary
+          if-no-files-found: error
+          retention-days: 90
