@@ -1,0 +1,45 @@
+name: MG 853 G5 Bloco 1 Inventário Acelerado
+
+on:
+  push:
+    paths:
+      - 'mg853-g5-block1/**'
+      - '.github/workflows/mg853-g5-block1-inventory.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        lot: [G5-L03, G5-L04, G5-L05, G5-L09]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      LOT_ID: ${{ matrix.lot }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade requests beautifulsoup4 lxml pandas openpyxl xlrd
+      - name: Inventory and stage official source
+        run: python mg853-g5-block1/inventory_block1.py
+      - name: Show summary
+        if: always()
+        run: |
+          cat mg853-g5-block1/output/${LOT_ID}/summary.json || true
+          cat mg853-g5-block1/output/${LOT_ID}/errors.json || true
+      - name: Upload lot inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mg853-${{ matrix.lot }}-block1-inventory-20260807
+          path: mg853-g5-block1/output/${{ matrix.lot }}
+          if-no-files-found: error
+          retention-days: 90
