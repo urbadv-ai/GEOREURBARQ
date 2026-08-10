@@ -1,0 +1,28 @@
+{
+  "lote_id": "G5-L07",
+  "versao": "V1.0",
+  "source_run_id": 31211283205,
+  "artifact_count": 19,
+  "regra": "Manifesto congelado dos 19 artefatos normalizados. A consolidação deve falhar se nome, artifact_id ou digest não corresponder exatamente ao registrado.",
+  "artifacts": [
+    {"idx":0,"artifact_id":9006776101,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_0_V1_0","size_in_bytes":43609,"digest":"sha256:9bdbd1fc9c7aba23966c42fa8ccec41071e9719a2eb2f2ee6f7a19c450f6e93a"},
+    {"idx":1,"artifact_id":9006773787,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_1_V1_0","size_in_bytes":33935,"digest":"sha256:a8d88bdfcb692f0ee7c6935e27d8c6c3fe65b185a616507ff6da919d66744e09"},
+    {"idx":2,"artifact_id":9006775280,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_2_V1_0","size_in_bytes":28887,"digest":"sha256:f1b80a58cd1c9a425c171eb59e24e610430787f95f92b1df79b9d21fdb8215c9"},
+    {"idx":3,"artifact_id":9006796182,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_3_V1_0","size_in_bytes":42274,"digest":"sha256:e2eda31e1b8076cea4efbbc97451d8310d1ff7bc4f408fd4905296ae88c577ae"},
+    {"idx":4,"artifact_id":9006790044,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_4_V1_0","size_in_bytes":21622,"digest":"sha256:5700f21c559e99c939cff9b29f288355085c5903c71cb0b7fcb973edbc8039f1"},
+    {"idx":5,"artifact_id":9006790606,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_5_V1_0","size_in_bytes":12486,"digest":"sha256:1efbbfaf0543fa036eadd26a4a04e275fce90aceed63877e882254dcfbcf6176"},
+    {"idx":6,"artifact_id":9009115168,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_6_V1_0","size_in_bytes":27481,"digest":"sha256:cc73d717ee6bbfede7cdf19aa89a1e713f6309d163e6053d82ef0b50d3c81fe6"},
+    {"idx":7,"artifact_id":9008015618,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_7_V1_0","size_in_bytes":27296,"digest":"sha256:b5c5045ad6a594f9fc561c510a0392b6fa63800748e0c69dbffa421ec232e2d7"},
+    {"idx":8,"artifact_id":9007373070,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_8_V1_0","size_in_bytes":23370,"digest":"sha256:58871a06554daea434f6004d1f547fcd6c48ddf96b3afeeb8a82729bde28eded"},
+    {"idx":9,"artifact_id":9008040737,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_9_V1_0","size_in_bytes":24930,"digest":"sha256:0f3f570706a9b2e3b4ad33e40c4fa42b2515fa03620085fdd2a6190058c6f0ee"},
+    {"idx":10,"artifact_id":9008591475,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_10_V1_0","size_in_bytes":26805,"digest":"sha256:8b97f331d27c91c2394fc344df4291d6bcb241fee2ecd1c073893506ad47c7d5"},
+    {"idx":11,"artifact_id":9008760743,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_11_V1_0","size_in_bytes":25879,"digest":"sha256:5986657dec14066c580258d0bd3d106bf06a7fa120d10bd5e0f8e099ef7fd362"},
+    {"idx":12,"artifact_id":9008828537,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_12_V1_0","size_in_bytes":26219,"digest":"sha256:c3f4a7adba925ebdaf978815bda5c8f1f9ce9d49185286183f409d2311c71f7a"},
+    {"idx":13,"artifact_id":9009337583,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_13_V1_0","size_in_bytes":24890,"digest":"sha256:3e7d9e233bdc5d5dd045ad3ceba54067f06ff8bdf412ba76a6c3a4e90d2d4a71"},
+    {"idx":14,"artifact_id":9009238278,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_14_V1_0","size_in_bytes":28692,"digest":"sha256:4152d03a1c2547c4e3dc82461af5cd13c095e5aaa5da3fcb8d2b391ef9459049"},
+    {"idx":15,"artifact_id":9009740955,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_15_V1_0","size_in_bytes":33140,"digest":"sha256:b0ec71397eb1dd90b56c39adb91267ebe34c768396389e84d4ec2005b67b5d13"},
+    {"idx":16,"artifact_id":9009864612,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_16_V1_0","size_in_bytes":34431,"digest":"sha256:2f0203054d414c1ef5fde14852eadcfa2a4bd16408c07a90660b0406ad2ba6a4"},
+    {"idx":17,"artifact_id":9009748402,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_17_V1_0","size_in_bytes":32109,"digest":"sha256:48960233091f1b717b0a9409963201c2e5842a22a6f8f62e2ed031180201072d"},
+    {"idx":18,"artifact_id":9010507970,"name":"MG853_G5_L07_NORMALIZED_COMPONENT_18_V1_0","size_in_bytes":35109,"digest":"sha256:5ba28a778cf6f8cae07783c7104ad43391e5bdf97313e0afa08f3fd266b5c674"}
+  ]
+}
