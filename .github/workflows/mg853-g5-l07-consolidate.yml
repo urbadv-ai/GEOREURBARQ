@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'mg853-g5-l07/consolidate_l07.py'
+      - 'mg853-g5-l07/manifest_normalized_artifacts_v1_0.json'
       - '.github/workflows/mg853-g5-l07-consolidate.yml'
   workflow_dispatch:
 
@@ -15,9 +16,10 @@ permissions:
 jobs:
   consolidate:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 60
     env:
       SOURCE_RUN_ID: '31211283205'
+      MANIFEST_PATH: 'mg853-g5-l07/manifest_normalized_artifacts_v1_0.json'
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
@@ -25,45 +27,111 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install --disable-pip-version-check pandas==2.2.3
-      - name: Wait for all 19 approved component artifacts
+
+      - name: Freeze and validate exact 19 artifact identities
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p normalized_inputs
-          for IDX in $(seq 0 18); do
-            NAME="MG853_G5_L07_NORMALIZED_COMPONENT_${IDX}_V1_0"
+          gh api "repos/${{ github.repository }}/actions/runs/${SOURCE_RUN_ID}/artifacts?per_page=100" > normalized_inputs/source_run_artifacts.json
+          python - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+
+          manifest=json.loads(Path(os.environ['MANIFEST_PATH']).read_text(encoding='utf-8'))
+          live=json.loads(Path('normalized_inputs/source_run_artifacts.json').read_text(encoding='utf-8'))
+          arts=live.get('artifacts',[])
+          live_by_id={int(a['id']):a for a in arts}
+          expected=manifest.get('artifacts',[])
+          errors=[]
+          if manifest.get('source_run_id') != int(os.environ['SOURCE_RUN_ID']):
+              errors.append('source_run_id diverge do manifesto')
+          if len(expected) != 19:
+              errors.append(f'manifesto contém {len(expected)} artefatos, esperado 19')
+          if sorted(a.get('idx') for a in expected) != list(range(19)):
+              errors.append('índices do manifesto não são exatamente 0..18')
+          for e in expected:
+              aid=int(e['artifact_id'])
+              a=live_by_id.get(aid)
+              if not a:
+                  errors.append(f"idx {e['idx']}: artifact_id {aid} não localizado")
+                  continue
+              if a.get('name') != e.get('name'):
+                  errors.append(f"idx {e['idx']}: nome diverge: {a.get('name')} != {e.get('name')}")
+              if a.get('digest') and e.get('digest') and a.get('digest') != e.get('digest'):
+                  errors.append(f"idx {e['idx']}: digest diverge")
+              if a.get('expired'):
+                  errors.append(f"idx {e['idx']}: artefato expirado")
+          if errors:
+              Path('normalized_inputs/MANIFEST_VALIDATION_FAILURE.txt').write_text('\n'.join(errors),encoding='utf-8')
+              print('\n'.join(errors),file=sys.stderr)
+              raise SystemExit(2)
+          rows=['idx\tartifact_id\tname\tdigest']
+          for e in sorted(expected,key=lambda x:x['idx']):
+              rows.append(f"{e['idx']}\t{e['artifact_id']}\t{e['name']}\t{e['digest']}")
+          Path('normalized_inputs/MANIFEST_VALIDATED.tsv').write_text('\n'.join(rows)+'\n',encoding='utf-8')
+          print('MANIFESTO_VALIDADO_19_DE_19')
+          PY
+
+      - name: Download only manifest-approved artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' > normalized_inputs/download_plan.tsv
+          import json, os
+          from pathlib import Path
+          m=json.loads(Path(os.environ['MANIFEST_PATH']).read_text(encoding='utf-8'))
+          for e in sorted(m['artifacts'],key=lambda x:x['idx']):
+              print(f"{e['idx']}\t{e['name']}")
+          PY
+          while IFS=$'\t' read -r IDX NAME; do
             mkdir -p "normalized_inputs/${IDX}"
             ok=0
-            for n in $(seq 1 180); do
+            for attempt in 1 2 3; do
               if gh run download "$SOURCE_RUN_ID" -n "$NAME" --dir "normalized_inputs/${IDX}"; then
-                echo "Downloaded $NAME"
                 ok=1
                 break
               fi
               rm -rf "normalized_inputs/${IDX}"/*
-              echo "Waiting $NAME attempt $n/180"
-              sleep 20
+              echo "Transport retry $attempt/3 for $NAME"
+              sleep 10
             done
             if [ "$ok" -ne 1 ]; then
-              echo "Missing $NAME" >&2
-              exit 2
+              echo "Transport failure downloading frozen artifact $NAME" >&2
+              exit 3
             fi
-          done
-      - name: Freeze artifact metadata
-        run: gh api "repos/${{ github.repository }}/actions/runs/${SOURCE_RUN_ID}/artifacts?per_page=100" > normalized_inputs/source_run_artifacts.json
+          done < normalized_inputs/download_plan.tsv
+
       - name: Consolidate and audit
         run: python mg853-g5-l07/consolidate_l07.py
-      - name: Package promotion candidate
-        if: always()
-        run: |
-          zip -r MG853_G5_L07_PROMOCAO_V1_0_20260807.zip out_l07_consolidated || true
-      - name: Upload promotion candidate
-        if: always()
+
+      - name: Package approved promotion candidate
+        if: success()
+        run: zip -r MG853_G5_L07_PROMOCAO_V1_0_20260810.zip out_l07_consolidated normalized_inputs/MANIFEST_VALIDATED.tsv "$MANIFEST_PATH"
+
+      - name: Upload approved promotion candidate
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MG853_G5_L07_PROMOCAO_V1_0_20260807
+          name: MG853_G5_L07_PROMOCAO_V1_0_20260810
           path: |
-            MG853_G5_L07_PROMOCAO_V1_0_20260807.zip
+            MG853_G5_L07_PROMOCAO_V1_0_20260810.zip
             out_l07_consolidated/
+            normalized_inputs/MANIFEST_VALIDATED.tsv
+            mg853-g5-l07/manifest_normalized_artifacts_v1_0.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload diagnostics only on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MG853_G5_L07_CONSOLIDACAO_DIAGNOSTICO_20260810
+          path: |
+            out_l07_consolidated/
+            normalized_inputs/MANIFEST_VALIDATION_FAILURE.txt
+            normalized_inputs/MANIFEST_VALIDATED.tsv
+            normalized_inputs/source_run_artifacts.json
+            mg853-g5-l07/manifest_normalized_artifacts_v1_0.json
           if-no-files-found: warn
           retention-days: 30
