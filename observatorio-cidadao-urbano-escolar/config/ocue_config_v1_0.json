@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "OCUE_CANONICO",
+  "nome": "Observatório Cidadão Urbano Escolar",
+  "programa": "Programa Educacional para Cidades e Cidadania",
+  "metodologia": "Ciclo de Cidadania Urbana",
+  "chaves": {
+    "municipio": "cod_ibge_7",
+    "escola": "escola_id",
+    "territorio": "territorio_id",
+    "observacao": "observacao_id",
+    "evidencia": "evidencia_id"
+  },
+  "referencias_externas": {
+    "idsc_quality": "mg853-p1-id/data/metadata/idsc_quality_checks.json",
+    "idsc_municipios_mg": "mg853-p1-id/data/mg853/mg_853_idsc_municipios.csv",
+    "idsc_ods_mg": "mg853-p1-id/data/mg853/mg_853_idsc_ods_resumo_long.csv"
+  },
+  "geoespacial": {
+    "crs_intercambio": "EPSG:4674",
+    "nome_crs": "SIRGAS 2000",
+    "coordenadas_ponto": ["longitude", "latitude"],
+    "geometria_postgis_srid": 4674
+  },
+  "etapas_ciclo": ["CONHECER", "OBSERVAR", "MAPEAR", "CLASSIFICAR", "PROPOR", "PARTICIPAR", "ACOMPANHAR"],
+  "status_validacao": ["REGISTRO_INICIAL", "EVIDENCIA_ANEXADA", "VALIDADO_PEDAGOGICAMENTE", "VALIDADO_TECNICAMENTE", "VALIDADO_POR_FONTE_OFICIAL", "INCONSISTENTE", "ARQUIVADO"],
+  "privacidade": {
+    "dados_pessoais_estudantes": "PROIBIDO_NA_BASE_ANALITICA",
+    "campos_proibidos": ["nome_aluno", "nome_estudante", "cpf", "rg", "email_aluno", "email_estudante", "telefone_aluno", "telefone_estudante", "data_nascimento_aluno", "endereco_residencial_aluno"],
+    "evidencia_imagem": {
+      "exigir_status_privacidade": true,
+      "status_permitidos": ["SEM_PESSOAS_IDENTIFICAVEIS", "ANONIMIZADA", "USO_RESTRITO_AUTORIZADO", "NAO_PUBLICAVEL"]
+    }
+  },
+  "qualidade": {
+    "ods_exatos": 17,
+    "etapas_ciclo_exatas": 7,
+    "cod_ibge_regex": "^[0-9]{7}$",
+    "hash_sha256_regex": "^[a-f0-9]{64}$",
+    "fail_closed": true
+  },
+  "natureza_dado": {
+    "OCUE": "DADO_CIDADAO_INTRAMUNICIPAL",
+    "IDSC": "INDICADOR_PUBLICO_MUNICIPAL",
+    "IBGE_OUTRAS": "DADO_PUBLICO_OFICIAL_OU_INSTITUCIONAL"
+  }
+}
