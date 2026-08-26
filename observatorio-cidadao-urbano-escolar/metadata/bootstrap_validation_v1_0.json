@@ -1,0 +1,29 @@
+{
+  "dataset_id": "OCUE_CANONICO",
+  "schema_version": "1.0",
+  "status": "APROVADO",
+  "validado_em": "2026-08-26",
+  "github_actions_run_id": 33021673737,
+  "artifact_id": 9626747848,
+  "artifact_sha256": "4b1243f3299ae6fef6386e194da498ec145118de35a2a854bcdc330a988f7f55",
+  "checks": {
+    "idsc_status": "APROVADO",
+    "idsc_br_municipios": 5570,
+    "idsc_mg_municipios": 853,
+    "idsc_br_ods_rows": 94690,
+    "ods_catalog_count": 17,
+    "cycle_steps": [
+      "CONHECER",
+      "OBSERVAR",
+      "MAPEAR",
+      "CLASSIFICAR",
+      "PROPOR",
+      "PARTICIPAR",
+      "ACOMPANHAR"
+    ],
+    "tema_codigo_count": 16,
+    "direito_dever_codigo_count": 12,
+    "canal_codigo_count": 10
+  },
+  "errors": []
+}
