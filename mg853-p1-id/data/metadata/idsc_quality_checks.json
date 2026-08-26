@@ -1,0 +1,39 @@
+{
+  "pipeline_version": "1.1.0",
+  "gerado_em_utc": "2026-08-26T22:38:28Z",
+  "snapshot_date": "2026-08-26",
+  "endpoint_municipal_selecionado": "buscarAllPerfilCidadeDetalhes",
+  "deteccao_colunas": {
+    "code_column_detected": "id",
+    "code_column_matches_ibge": 5570,
+    "name_column_detected": "nome",
+    "uf_column_detected": "siglaEstado",
+    "id_column_detected": "id",
+    "score_column_detected": "pontuacao",
+    "rank_column_detected": "classificacao"
+  },
+  "registros_municipais_fonte": 5570,
+  "municipios_nacionais_com_codigo_ibge_unico": 5570,
+  "registros_nacionais_sem_codigo_ibge": 0,
+  "municipios_ibge_total": 5570,
+  "municipios_nacionais_com_17_ods": 5570,
+  "linhas_ods_nacional": 94690,
+  "municipios_mg_ibge": 853,
+  "municipios_mg_com_idsc": 853,
+  "municipios_mg_sem_idsc": 0,
+  "municipios_mg_com_17_ods_resumo": 853,
+  "cobertura_ods_detalhada_mg": 853,
+  "cobertura_series_mg": 853,
+  "erros_detalhamento_mg": 0,
+  "criterios_aprovacao": {
+    "ibge_nacional_exato": 5570,
+    "idsc_nacional_exato": 5570,
+    "mg_ibge_exato": 853,
+    "mg_idsc_exato": 853,
+    "ods_por_municipio_esperado": 17,
+    "mg_ods_detalhe_exato": 853,
+    "mg_series_exato": 853,
+    "erros_detalhamento_maximo": 0
+  },
+  "status_qualidade": "APROVADO"
+}

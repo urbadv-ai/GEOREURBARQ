@@ -1,0 +1,116 @@
+{
+  "pipeline_version": "1.1.0",
+  "gerado_em_utc": "2026-08-26T22:38:28Z",
+  "snapshot_date": "2026-08-26",
+  "status_qualidade": "APROVADO",
+  "chave_territorial_canonica": "cod_ibge_7",
+  "fonte_principal": "IDSC-BR / Instituto Cidades Sustentáveis",
+  "arquivos": [
+    {
+      "arquivo": "metadata/ibge_municipios_crosswalk.csv",
+      "sha256": "f60e44b0cbf5604c499284e0aa653da2a41a974c3ff50bd8d7b98fdafd574c99",
+      "bytes": 134381
+    },
+    {
+      "arquivo": "metadata/idsc_quality_checks.json",
+      "sha256": "63cc56959fc2cc01be31aaf8a6e9c935124822b4dc6f3f44f3b50062ea4fa75e",
+      "bytes": 1268
+    },
+    {
+      "arquivo": "metadata/idsc_source_inventory.csv",
+      "sha256": "b8a7e2c909eb3161c1cd93b05c33b2f31873c7db3a8c2b4e9feb3513ab3a16e1",
+      "bytes": 1309
+    },
+    {
+      "arquivo": "metadata/raw_manifest.json",
+      "sha256": "17d0f33c1bd2e2ffa1f6c88993c4917abb3f65ec4f579a225651ac106898ca0f",
+      "bytes": 3140
+    },
+    {
+      "arquivo": "mg853/mg_853_idsc_municipios.csv",
+      "sha256": "e5fff578e23ef3f476ffdfd02c9f8a8dc2379e842aec3df80455f8c4f1ef2fe5",
+      "bytes": 261374
+    },
+    {
+      "arquivo": "mg853/mg_853_idsc_ods_long.csv",
+      "sha256": "1b335ad97d9bc873f5946d300fa618bf30cff2f8167a9749821f88f595f89dbc",
+      "bytes": 35174989
+    },
+    {
+      "arquivo": "mg853/mg_853_idsc_ods_resumo_long.csv",
+      "sha256": "03c0748cb8324cfca88ffc466959fa79173957b678175e4fac49aa8456fd018c",
+      "bytes": 19337575
+    },
+    {
+      "arquivo": "mg853/mg_853_idsc_series_long.csv",
+      "sha256": "e68ecbe82a873925a211734ec78f43a533f24af61cc9c2a87cde2bcf5f4bc834",
+      "bytes": 9942376
+    },
+    {
+      "arquivo": "normalized/idsc_brasil_buscarinfoindicadoridsc.csv",
+      "sha256": "244bd90dc616de26edc76faaf95648e38e4e13e2c3216b989816b9072c8dbf37",
+      "bytes": 53521
+    },
+    {
+      "arquivo": "normalized/idsc_brasil_buscarlabelsods.csv",
+      "sha256": "6ea72a4d9e86053da81dc4357650636891c57b5486a1ae92397412d0fc0fdc5a",
+      "bytes": 1394
+    },
+    {
+      "arquivo": "normalized/idsc_brasil_buscarpanoramaodscidades.csv",
+      "sha256": "a749774eb144cf5e016d8606099be6da5eb33605e0b579eaeb73be5a5219669a",
+      "bytes": 10889901
+    },
+    {
+      "arquivo": "normalized/idsc_brasil_municipios.csv",
+      "sha256": "6bf1e17350955507f19af1e4866f0efeaf6f2e7a8a05bfcdb5035374abd4bda5",
+      "bytes": 1686936
+    },
+    {
+      "arquivo": "normalized/idsc_brasil_municipios_source_wide.csv.gz",
+      "sha256": "7ed00e263df1f9386504eaabf425311e926fbffa25b33b59090ec0da3703cc0d",
+      "bytes": 1821129
+    },
+    {
+      "arquivo": "normalized/idsc_brasil_ods_long.csv",
+      "sha256": "5b73405d5d141c2ae884fabda2cdcc1eb1a0772ab379bb37df0ab2c3d2ae61ad",
+      "bytes": 29872113
+    },
+    {
+      "arquivo": "raw/current/ibge_sidra_4714_municipios_2022.json.gz",
+      "sha256": "23f906c45dd7bc9fb0c903b367edbd48d6e03897e258dbb8d4ef8503741c0165",
+      "bytes": 88530
+    },
+    {
+      "arquivo": "raw/current/idsc_buscarAllPerfilCidade.json.gz",
+      "sha256": "2c20735cb188894f4d241c4dbdbf5886244b007f37efcf7900ab5752fdaa76fa",
+      "bytes": 124451
+    },
+    {
+      "arquivo": "raw/current/idsc_buscarAllPerfilCidadeDetalhes.json.gz",
+      "sha256": "c66141b231332cbaef2b196be37466d67cf66bb213496ea4ecb0d427b4d92dc6",
+      "bytes": 1803348
+    },
+    {
+      "arquivo": "raw/current/idsc_buscarInfoIndicadorIdsc.json.gz",
+      "sha256": "f33c91926758e681e27c84053141c2fa37d419d2a05a69a0b96b84894f15fed9",
+      "bytes": 13695
+    },
+    {
+      "arquivo": "raw/current/idsc_buscarLabelsOds.json.gz",
+      "sha256": "94b30f92c889b843cc72b2be486558fb5cdc416f2851f78daf61f1c45081a8ea",
+      "bytes": 481
+    },
+    {
+      "arquivo": "raw/current/idsc_buscarPanoramaOdsCidades.json.gz",
+      "sha256": "62965bd0359b200e00f0ae998622b97ff393d9ba51a85f64b361481dee580ac7",
+      "bytes": 1225314
+    }
+  ],
+  "persistencia_git": {
+    "policy_version": "1.0",
+    "raw": "gzip determinístico, conteúdo integral",
+    "source_wide": "CSV gzip determinístico, camada lossless",
+    "ods_nacional": "CSV normalizado sem duplicação do payload textual; conteúdo integral preservado nas camadas raw/source-wide"
+  }
+}

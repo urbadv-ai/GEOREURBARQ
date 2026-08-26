@@ -1,0 +1,8 @@
+﻿endpoint,status,url,bytes,listas_detectadas,maior_lista,erro
+buscarAllPerfilCidadeDetalhes,OK,https://www.cidadessustentaveis.org.br/api/idsc-br/buscarAllPerfilCidadeDetalhes,95232104.0,21.0,5570.0,
+buscarAllPerfilCidade,OK,https://www.cidadessustentaveis.org.br/api/idsc-br/buscarAllPerfilCidade,960452.0,1.0,5570.0,
+buscarAllPerfilCidadeDetalhesPaginado,ERRO,https://www.cidadessustentaveis.org.br/api/idsc-br/buscarAllPerfilCidadeDetalhesPaginado,,,,"RetryError(MaxRetryError(""HTTPSConnectionPool(host='www.cidadessustentaveis.org.br', port=443): Max retries exceeded with url: /api/idsc-br/buscarAllPerfilCidadeDetalhesPaginado (Caused by ResponseError('too many 500 error responses'))""))"
+buscarPanoramaOdsCidades,OK,https://www.cidadessustentaveis.org.br/api/idsc-br/buscarPanoramaOdsCidades,9943694.0,21.0,5565.0,
+buscarLabelsOds,OK,https://www.cidadessustentaveis.org.br/api/idsc-br/buscarLabelsOds,1035.0,1.0,17.0,
+buscarInfoIndicadorIdsc,OK,https://www.cidadessustentaveis.org.br/api/idsc-br/buscarInfoIndicadorIdsc,69032.0,1.0,100.0,
+buscarIndicadoresObservacoesIdsc,ERRO,https://www.cidadessustentaveis.org.br/api/idsc-br/buscarIndicadoresObservacoesIdsc,,,,HTTPError('404 Client Error: Not Found for url: https://www.cidadessustentaveis.org.br/api/idsc-br/buscarIndicadoresObservacoesIdsc')
