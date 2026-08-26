@@ -10,42 +10,61 @@ O IDSC é utilizado como **referência municipal** para contextualizar os 17 Obj
 
 ## Regra canônica
 
-A chave territorial é `cod_ibge_7`. A lista de municípios do IBGE é a dimensão de referência; o recorte de Minas Gerais é derivado dos códigos iniciados por `31` e deve conter **exatamente 853 municípios**.
+A chave territorial é `cod_ibge_7`. A dimensão municipal do IBGE é a referência territorial. O pipeline detecta a chave por conteúdo e valida os códigos contra o IBGE; na estrutura atual do IDSC, o campo `id` corresponde ao próprio código IBGE de 7 dígitos.
 
 A carga segue cinco camadas:
 
-- `data/raw/current/`: respostas brutas atuais das fontes, sem transformação semântica;
-- `data/normalized/`: base nacional IDSC normalizada e estruturas auxiliares nacionais;
-- `data/mg853/`: recorte mineiro, detalhamento ODS e séries em formato longo;
-- `data/metadata/`: crosswalk IBGE, inventário das fontes, controles de qualidade e manifestos SHA-256;
-- `data/history/YYYY-MM-DD/`: snapshots de manifesto e qualidade das cargas aprovadas.
+- `data/raw/current/`: respostas brutas integrais, persistidas em **gzip determinístico**;
+- `data/normalized/`: base nacional IDSC, matriz nacional município × ODS e estruturas auxiliares;
+- `data/mg853/`: recorte dos 853 municípios mineiros, resumo dos 17 ODS, detalhamento ODS e séries;
+- `data/metadata/`: crosswalk IBGE, inventário de fontes, quality gates e manifestos SHA-256;
+- `data/history/YYYY-MM-DD/`: snapshots do manifesto e da qualidade de cada carga aprovada.
 
-O Git preserva o histórico completo dos arquivos `current` e `normalized`; a pasta `history` mantém a certificação lógica de cada carga aprovada sem duplicar desnecessariamente todas as bases.
+A camada `source-wide` também é persistida em gzip, sem perda. A tabela `idsc_brasil_ods_long.csv` é analítica e não repete os longos textos de descrição em cada linha; esses textos permanecem integralmente preservados nas camadas raw e source-wide. Essa política evita redundância e respeita os limites de tamanho do GitHub sem perda de informação.
 
 ## Controles de qualidade
 
-A atualização é **fail-closed**. O pipeline encerra com erro e não promove uma nova carga quando algum dos gates canônicos falha. A versão 1.0 exige:
+A atualização é **fail-closed**: qualquer divergência reprova a carga e impede a substituição da versão canônica válida. Os gates atuais exigem simultaneamente:
 
-1. dimensão municipal IBGE nacional com pelo menos 5.500 códigos únicos;
-2. base IDSC nacional com pelo menos 5.500 vínculos por código IBGE;
-3. dimensão IBGE de Minas Gerais com exatamente 853 municípios;
-4. recorte MG-IDSC com exatamente 853 municípios vinculados.
+1. **5.570/5.570** municípios na dimensão IBGE;
+2. **5.570/5.570** municípios IDSC vinculados por código IBGE;
+3. **zero** registros nacionais sem código IBGE;
+4. **5.570/5.570** municípios com os 17 ODS;
+5. **94.690** relações município × ODS no Brasil (`5.570 × 17`);
+6. **853/853** municípios mineiros no recorte;
+7. **853/853** municípios mineiros vinculados ao IDSC;
+8. **853/853** municípios mineiros com os 17 ODS;
+9. **853/853** municípios com payload ODS detalhado;
+10. **853/853** municípios com séries IDSC;
+11. **zero** erros de detalhamento.
 
-Os limites ficam parametrizados em `config/idsc_pipeline_config_v1_0.json`.
+Os parâmetros ficam em `config/idsc_pipeline_config_v1_0.json` e o resultado de cada execução em `data/metadata/idsc_quality_checks.json`.
 
 ## Arquivos centrais
 
-`data/normalized/idsc_brasil_municipios.csv` é a tabela nacional canônica. `data/normalized/idsc_brasil_municipios_source_wide.csv` preserva os campos expostos pela fonte para auditoria e evolução do mapeamento. `data/mg853/mg_853_idsc_municipios.csv` é o recorte mineiro de cobertura completa. Os payloads ODS e de evolução são convertidos para representação longa, preservando `json_path`, valor, hash do payload e URL de origem.
+- `data/normalized/idsc_brasil_municipios.csv`: tabela nacional canônica, um município por linha;
+- `data/normalized/idsc_brasil_ods_long.csv`: 17 ODS por município, em formato longo;
+- `data/normalized/idsc_brasil_municipios_source_wide.csv.gz`: camada lossless de auditoria;
+- `data/mg853/mg_853_idsc_municipios.csv`: recorte estadual de cobertura completa;
+- `data/mg853/mg_853_idsc_ods_resumo_long.csv`: recorte MG da matriz município × ODS;
+- `data/mg853/mg_853_idsc_ods_long.csv`: payload detalhado ODS em representação escalar longa;
+- `data/mg853/mg_853_idsc_series_long.csv`: séries municipais em representação longa;
+- `data/metadata/dataset_manifest.json`: relação dos artefatos aprovados, tamanhos e hashes;
+- `data/metadata/raw_manifest.json`: URL, hash da resposta original, hash do gzip persistido e timestamp.
 
-A especificação formal dos datasets está em `schema/idsc_canonical_schema_v1_0.json`.
+A especificação formal está em `schema/idsc_canonical_schema_v1_0.json`.
 
 ## Automação
 
-O workflow `.github/workflows/mg853-p1-idhm-idsc.yml` executa o pipeline em alterações estruturais, sob acionamento manual e mensalmente. Somente após a aprovação dos controles ele adiciona/atualiza `mg853-p1-id/data` no `main` e publica o mesmo conjunto como artefato temporário do GitHub Actions.
+O workflow `.github/workflows/mg853-p1-idhm-idsc.yml` executa a coleta mensalmente, sob acionamento manual e após alterações no pipeline/configuração. A sequência é:
+
+**extrair → normalizar → validar → compactar camadas lossless → publicar artefato → validar política de tamanho → persistir no `main`.**
+
+Execuções obsoletas são canceladas quando uma nova versão do pipeline é disparada, evitando concorrência entre snapshots.
 
 ## Fontes
 
-- IDSC-BR / Instituto Cidades Sustentáveis: API pública usada pela aplicação do índice;
-- IBGE SIDRA, tabela 4714: dimensão municipal/código IBGE utilizada para a chave territorial.
+- IDSC-BR / Instituto Cidades Sustentáveis: API pública utilizada pela aplicação do índice;
+- IBGE SIDRA, tabela 4714: dimensão municipal e código IBGE usados como chave territorial.
 
-Toda captura bruta recebe SHA-256 e timestamp UTC no manifesto de origem.
+Nenhuma carga é considerada canônica apenas por ter sido baixada: ela precisa superar integralmente os gates acima.
