@@ -1,0 +1,11 @@
+canal_codigo,canal_nome,categoria
+OUVIDORIA,Ouvidoria pública,ADMINISTRATIVO
+PROTOCOLO,Protocolo administrativo,ADMINISTRATIVO
+CONSELHO,Conselho de política pública,PARTICIPATIVO
+AUDIENCIA_PUBLICA,Audiência pública,PARTICIPATIVO
+CONSULTA_PUBLICA,Consulta pública,PARTICIPATIVO
+CAMARA_MUNICIPAL,Câmara Municipal,LEGISLATIVO
+ASSOCIACAO_COMUNITARIA,Associação ou organização comunitária,COMUNITARIO
+ESCOLA,Instância escolar,EDUCACIONAL
+ACAO_COMUNITARIA,Ação comunitária direta,COMUNITARIO
+OUTRO,Outro canal,OUTRO
