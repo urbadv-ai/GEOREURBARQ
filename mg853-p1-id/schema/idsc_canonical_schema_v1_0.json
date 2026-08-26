@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "IDSC_BR_CANONICO",
+  "chave_primaria_territorial": "cod_ibge_7",
+  "principios": [
+    "preservação do dado bruto",
+    "normalização sem perda da fonte",
+    "vinculação territorial por código IBGE de 7 dígitos",
+    "recorte estadual derivado do universo nacional",
+    "controle de qualidade antes da promoção da carga",
+    "hash SHA-256 para rastreabilidade",
+    "snapshots históricos de manifesto e qualidade"
+  ],
+  "datasets": {
+    "normalized/idsc_brasil_municipios.csv": {
+      "grain": "um registro municipal IDSC por vínculo territorial/origem",
+      "columns": {
+        "cod_ibge_7": "Código IBGE do município com 7 dígitos; chave territorial canônica.",
+        "municipio_ibge": "Nome oficial do município conforme mapa territorial IBGE usado na carga.",
+        "uf": "Sigla da unidade da federação.",
+        "id_cidade_idsc": "Identificador interno da cidade na fonte IDSC, quando exposto.",
+        "pontuacao_geral_idsc": "Pontuação geral do IDSC, quando exposta pelo endpoint municipal selecionado.",
+        "classificacao_geral_idsc": "Posição/classificação geral, quando exposta pela fonte.",
+        "nivel_desenvolvimento_idsc": "Faixa ou nível de desenvolvimento sustentável informado pela fonte.",
+        "status_vinculo_ibge": "Método de vinculação: CODIGO_IBGE, NOME_UF, NOME_UNICO, AMBIGUO ou SEM_MATCH.",
+        "sistema_origem": "Sistema de origem: IDSC-BR.",
+        "endpoint_origem": "Endpoint que originou o registro municipal.",
+        "fonte": "Instituição/sistema responsável pela publicação.",
+        "url_fonte": "URL de origem consultada.",
+        "data_extracao_utc": "Data/hora UTC da carga.",
+        "hash_registro_origem": "SHA-256 do registro bruto de origem."
+      }
+    },
+    "normalized/idsc_brasil_municipios_source_wide.csv": {
+      "grain": "registro municipal com campos de origem achatados e preservados",
+      "purpose": "camada lossless para auditoria, evolução de esquema e reconstrução de mapeamentos"
+    },
+    "normalized/idsc_brasil_buscar_panorama_ods_cidades.csv": {
+      "grain": "maior lista tabular identificada no endpoint de panorama ODS",
+      "purpose": "preservar de forma plana e parametrizada a estrutura nacional de panorama por ODS"
+    },
+    "mg853/mg_853_idsc_municipios.csv": {
+      "grain": "exatamente um município IBGE de Minas Gerais por linha",
+      "cardinality_expected": 853,
+      "purpose": "recorte estadual canônico derivado por left join dos 853 códigos IBGE sobre a base nacional IDSC"
+    },
+    "mg853/mg_853_idsc_ods_long.csv": {
+      "grain": "folha escalar de payload ODS por município",
+      "columns_core": [
+        "cod_ibge_7",
+        "municipio_ibge",
+        "uf",
+        "id_cidade_idsc",
+        "json_path",
+        "valor",
+        "hash_payload_origem",
+        "url_fonte",
+        "data_extracao_utc"
+      ],
+      "purpose": "representação longa e sem perda do detalhamento ODS municipal"
+    },
+    "mg853/mg_853_idsc_series_long.csv": {
+      "grain": "folha escalar de payload de série temporal por município",
+      "purpose": "representação longa e sem perda da evolução temporal disponibilizada pelo IDSC"
+    },
+    "metadata/ibge_municipios_crosswalk.csv": {
+      "grain": "um código IBGE municipal por linha",
+      "purpose": "dimensão territorial usada como referência para todos os vínculos"
+    },
+    "metadata/idsc_quality_checks.json": {
+      "purpose": "gates de qualidade e resultado formal APROVADO/REPROVADO da carga"
+    },
+    "metadata/idsc_source_inventory.csv": {
+      "purpose": "inventário dos endpoints consultados, status, tamanho e listas detectadas"
+    },
+    "metadata/raw_manifest.json": {
+      "purpose": "manifesto das capturas brutas com URL, SHA-256, bytes e timestamp"
+    },
+    "metadata/dataset_manifest.json": {
+      "purpose": "manifesto final dos artefatos persistentes aprovados"
+    },
+    "history/YYYY-MM-DD/manifest_snapshot.json": {
+      "purpose": "snapshot imutável lógico do manifesto da carga aprovada"
+    },
+    "history/YYYY-MM-DD/quality_snapshot.json": {
+      "purpose": "snapshot dos controles de qualidade da carga aprovada"
+    }
+  },
+  "regra_promocao": "A carga somente é promovida quando o mapa IBGE nacional e a base IDSC superam o limiar nacional configurado e o recorte de Minas Gerais contém exatamente 853 municípios com vínculo IDSC.",
+  "nota_metodologica": "O IDSC-BR é uma referência de escala municipal. Dados do Observatório Cidadão Urbano Escolar devem constituir camada intramunicipal própria e nunca ser inferidos artificialmente a partir do desempenho médio municipal."
+}
