@@ -4,10 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/mg853-p1-idhm-idsc.yml'
       - 'mg853-p1-id/pipeline/**'
       - 'mg853-p1-id/config/**'
-      - 'mg853-p1-id/schema/**'
   workflow_dispatch:
   schedule:
     - cron: '0 6 1 * *'
@@ -48,9 +46,35 @@ jobs:
           p=Path('mg853-p1-id/data/metadata/idsc_quality_checks.json')
           q=json.loads(p.read_text(encoding='utf-8'))
           assert q['status_qualidade']=='APROVADO', q
+          assert q['municipios_ibge_total']==5570, q
+          assert q['municipios_nacionais_com_codigo_ibge_unico']==5570, q
+          assert q['municipios_nacionais_com_17_ods']==5570, q
           assert q['municipios_mg_ibge']==853, q
           assert q['municipios_mg_com_idsc']==853, q
+          assert q['municipios_mg_com_17_ods_resumo']==853, q
+          assert q['cobertura_ods_detalhada_mg']==853, q
+          assert q['cobertura_series_mg']==853, q
+          assert q['erros_detalhamento_mg']==0, q
           print(json.dumps(q, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload approved canonical snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: idsc-br-canonical-mg853
+          path: mg853-p1-id/data
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Assert GitHub persistence size policy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('mg853-p1-id/data')
+          limit=100*1024*1024
+          oversized=[(str(p),p.stat().st_size) for p in root.rglob('*') if p.is_file() and p.stat().st_size>=limit]
+          assert not oversized, oversized
+          print('All persistent files are below GitHub 100 MiB hard limit.')
           PY
 
       - name: Persist approved canonical snapshot
@@ -64,13 +88,6 @@ jobs:
           else
             SNAPSHOT=$(python -c "import json;print(json.load(open('mg853-p1-id/data/metadata/idsc_quality_checks.json'))['snapshot_date'])")
             git commit -m "data(idsc): refresh canonical BR/MG853 snapshot ${SNAPSHOT}"
+            git pull --rebase origin main
             git push origin HEAD:main
           fi
-
-      - name: Upload approved snapshot artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: idsc-br-canonical-mg853
-          path: mg853-p1-id/data
-          if-no-files-found: error
-          retention-days: 90
