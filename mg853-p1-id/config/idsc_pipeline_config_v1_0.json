@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "IDSC_BR_CANONICO",
+  "pipeline_version": "1.0.0",
+  "chave_territorial_canonica": "cod_ibge_7",
+  "fontes": {
+    "idsc_api_base": "https://www.cidadessustentaveis.org.br/api/idsc-br/",
+    "ibge_municipios_url": "https://apisidra.ibge.gov.br/values/t/4714/n6/all/v/93/p/2022"
+  },
+  "endpoints": {
+    "municipios_nacionais": [
+      "buscarAllPerfilCidadeDetalhes",
+      "buscarAllPerfilCidade",
+      "buscarAllPerfilCidadeDetalhesPaginado"
+    ],
+    "auxiliares_nacionais": [
+      "buscarPanoramaOdsCidades",
+      "buscarLabelsOds",
+      "buscarInfoIndicadorIdsc",
+      "buscarIndicadoresObservacoesIdsc"
+    ],
+    "detalhe_mg_ods": "buscarInfoOdsPorCidade/{city_id}",
+    "detalhe_mg_series": "buscarSeriePontuacaoIdscPorCidade/{city_id}"
+  },
+  "controles_qualidade": {
+    "ibge_nacional_minimo": 5500,
+    "idsc_nacional_minimo_codigos_unicos": 5500,
+    "mg_ibge_exato": 853,
+    "mg_idsc_exato": 853
+  },
+  "concorrencia": {
+    "max_workers": 8
+  },
+  "camadas": {
+    "raw": "data/raw/current",
+    "normalized": "data/normalized",
+    "mg853": "data/mg853",
+    "metadata": "data/metadata",
+    "history": "data/history"
+  },
+  "aplicacao_institucional": {
+    "observatorio": "Observatório Cidadão Urbano Escolar",
+    "metodologia": "Ciclo de Cidadania Urbana",
+    "programa": "Programa Educacional para Cidades e Cidadania",
+    "uso_idsc": "camada municipal de referência para diagnóstico, comparação e contextualização dos 17 ODS; não substitui o diagnóstico intramunicipal participativo"
+  }
+}
