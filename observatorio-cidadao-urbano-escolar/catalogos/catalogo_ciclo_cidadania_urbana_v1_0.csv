@@ -1,0 +1,8 @@
+ordem,etapa_codigo,etapa_nome,pergunta_orientadora,produto_minimo
+1,CONHECER,Conhecer,"Como a cidade e este território funcionam?","contexto e conhecimento inicial"
+2,OBSERVAR,Observar,"O que está acontecendo no território?","registro observacional"
+3,MAPEAR,Mapear,"Onde acontece e qual é sua abrangência?","localização ou delimitação territorial"
+4,CLASSIFICAR,Classificar,"A qual tema urbano e ODS o problema se relaciona?","classificação temática e ODS justificada"
+5,PROPOR,Propor,"Que solução ou ação pode ser construída?","proposta registrada"
+6,PARTICIPAR,Participar,"Como a comunidade pode encaminhar ou deliberar sobre a proposta?","ato de participação ou encaminhamento"
+7,ACOMPANHAR,Acompanhar,"O que aconteceu depois e qual foi o resultado?","histórico de acompanhamento"
