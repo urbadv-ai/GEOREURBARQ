@@ -12,6 +12,7 @@ RAW = ROOT / 'raw' / 'current'
 NORM = ROOT / 'normalized'
 META = ROOT / 'metadata'
 HIST = ROOT / 'history'
+PERSISTENCE_POLICY_VERSION = '1.0'
 
 
 def sha256(path: Path) -> str:
@@ -71,8 +72,8 @@ def compact_national_ods() -> None:
     if not source.exists():
         return
     frame = pd.read_csv(source, low_memory=False)
-    # `payload_ods_json` repete descrições extensas já preservadas integralmente
-    # na captura bruta gzip e na camada source-wide lossless.
+    # O payload textual extenso já está preservado integralmente nas camadas
+    # raw gzip e source-wide lossless; aqui permanece a tabela analítica normalizada.
     frame = frame.drop(columns=['payload_ods_json'], errors='ignore')
     frame.to_csv(source, index=False, encoding='utf-8-sig')
 
@@ -91,6 +92,7 @@ def rebuild_dataset_manifest() -> None:
         })
     manifest['arquivos'] = files
     manifest['persistencia_git'] = {
+        'policy_version': PERSISTENCE_POLICY_VERSION,
         'raw': 'gzip determinístico, conteúdo integral',
         'source_wide': 'CSV gzip determinístico, camada lossless',
         'ods_nacional': 'CSV normalizado sem duplicação do payload textual; conteúdo integral preservado nas camadas raw/source-wide',
@@ -117,6 +119,7 @@ def main() -> None:
     assert_size_policy()
     print(json.dumps({
         'status': 'COMPACTACAO_APROVADA',
+        'policy_version': PERSISTENCE_POLICY_VERSION,
         'arquivos': len([p for p in ROOT.rglob('*') if p.is_file()]),
         'maior_arquivo_bytes': max((p.stat().st_size for p in ROOT.rglob('*') if p.is_file()), default=0),
     }, ensure_ascii=False, indent=2))
