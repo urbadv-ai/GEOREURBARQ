@@ -58,6 +58,9 @@ jobs:
           print(json.dumps(q, ensure_ascii=False, indent=2))
           PY
 
+      - name: Compact lossless layers for Git persistence
+        run: python mg853-p1-id/pipeline/compact_for_git.py
+
       - name: Upload approved canonical snapshot artifact
         uses: actions/upload-artifact@v4
         with:
