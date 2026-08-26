@@ -1,0 +1,36 @@
+name: OCUE Canonical Structure Validation
+
+on:
+  push:
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/**'
+      - 'mg853-p1-id/data/metadata/idsc_quality_checks.json'
+      - '.github/workflows/ocue-canonical-validate.yml'
+  pull_request:
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/**'
+      - 'mg853-p1-id/data/metadata/idsc_quality_checks.json'
+      - '.github/workflows/ocue-canonical-validate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate OCUE canonical bootstrap
+        run: python observatorio-cidadao-urbano-escolar/pipeline/validate_bootstrap.py
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocue-bootstrap-validation
+          path: observatorio-cidadao-urbano-escolar/metadata/bootstrap_validation.json
+          if-no-files-found: error
+          retention-days: 90
