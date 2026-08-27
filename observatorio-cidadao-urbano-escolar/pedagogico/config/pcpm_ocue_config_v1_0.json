@@ -1,0 +1,105 @@
+{
+  "protocol_id": "PCPM_OCUE",
+  "nome": "Protocolo Canônico de Construção Pedagógica e Metodológica do OCUE",
+  "version": "1.0.0",
+  "status": "CANONICO_EM_VALIDACAO",
+  "created_at": "2026-08-26",
+  "normative_last_verified": "2026-08-26",
+  "normative_review_due": "2026-11-24",
+  "normative_review_max_days": 90,
+  "programa": "Programa Educacional para Cidades e Cidadania",
+  "conteudo_estruturante": "Direitos e Deveres da Cidade",
+  "observatorio": "Observatório Cidadão Urbano Escolar",
+  "metodologia": "Ciclo de Cidadania Urbana",
+  "principios": [
+    "legalidade_e_atualidade_normativa",
+    "alinhamento_curricular",
+    "autonomia_dos_sistemas_e_escolas",
+    "contextualizacao_territorial",
+    "interdisciplinaridade_e_transversalidade",
+    "protagonismo_estudantil",
+    "avaliacao_formativa_e_rastreavel",
+    "inclusao_acessibilidade_e_equidade",
+    "privacidade_por_padrao_e_melhor_interesse",
+    "evidencia_e_rastreabilidade",
+    "normalizacao_documental",
+    "versionamento_e_replicabilidade"
+  ],
+  "modos_insercao_curricular_permitidos": [
+    "PROJETO_TRANSVERSAL_INTEGRADOR",
+    "CONTEUDO_INTEGRADO_A_COMPONENTE_EXISTENTE",
+    "UNIDADE_OU_SEQUENCIA_INTERDISCIPLINAR",
+    "ATIVIDADE_COMPLEMENTAR",
+    "ELETIVA_SE_PREVISTA_E_APROVADA_PELA_REDE",
+    "PARTE_DIVERSIFICADA_SE_PREVISTA_E_APROVADA_PELA_REDE",
+    "MODELO_MISTO"
+  ],
+  "regra_insercao": "Nenhum artefato deverá presumir a criação de disciplina obrigatória autônoma. A forma de inserção dependerá da legislação vigente, do currículo da rede, do Projeto Pedagógico da escola e das aprovações institucionais cabíveis.",
+  "gates": [
+    {"id":"G0","nome":"classificacao_e_escopo"},
+    {"id":"G1","nome":"varredura_normativa_e_frescor"},
+    {"id":"G2","nome":"enquadramento_curricular_e_institucional"},
+    {"id":"G3","nome":"fundamentacao_pedagogica_e_teorica"},
+    {"id":"G4","nome":"matriz_de_alinhamento_curricular"},
+    {"id":"G5","nome":"arquitetura_do_conteudo_programatico"},
+    {"id":"G6","nome":"desenho_didatico_metodologico"},
+    {"id":"G7","nome":"avaliacao_e_evidencias_de_aprendizagem"},
+    {"id":"G8","nome":"inclusao_acessibilidade_e_equidade"},
+    {"id":"G9","nome":"etica_privacidade_e_governanca_de_dados"},
+    {"id":"G10","nome":"adocao_e_aprovacao_institucional"},
+    {"id":"G11","nome":"normalizacao_abnt_metadados_e_versionamento"},
+    {"id":"G12","nome":"piloto_monitoramento_revisao_e_publicacao"}
+  ],
+  "status_artefato": [
+    "RASCUNHO",
+    "REVISAO_NORMATIVA",
+    "REVISAO_PEDAGOGICA",
+    "REVISAO_CURRICULAR",
+    "REVISAO_PRIVACIDADE_ACESSIBILIDADE",
+    "APROVADO_TECNICAMENTE",
+    "APROVADO_INSTITUCIONALMENTE",
+    "PILOTO",
+    "VALIDADO",
+    "PUBLICADO",
+    "SUPERADO"
+  ],
+  "revisoes_minimas": [
+    "juridico_normativa",
+    "pedagogica",
+    "curricular",
+    "inclusao_acessibilidade",
+    "privacidade_dados",
+    "institucional_quando_aplicavel"
+  ],
+  "padrao_abnt_interno": {
+    "natureza": "PADRAO_DOCUMENTAL_INTERNO_NAO_SUBSTITUI_NORMAS_EDUCACIONAIS",
+    "normas": [
+      "ABNT NBR 14724:2024 Versão Corrigida:2025",
+      "ABNT NBR 6023:2025",
+      "ABNT NBR 10520:2023",
+      "ABNT NBR 6024:2012",
+      "ABNT NBR 6027:2012",
+      "ABNT NBR 6028:2021"
+    ]
+  },
+  "camadas_curriculares_obrigatorias": [
+    "BNCC",
+    "diretrizes_CNE_aplicaveis",
+    "curriculo_da_rede",
+    "plano_de_curso_da_rede_quando_existente",
+    "projeto_pedagogico_da_escola",
+    "normas_locais_aplicaveis"
+  ],
+  "camadas_ocue": [
+    "ODS",
+    "tema_urbano_OCUE",
+    "etapa_Ciclo_de_Cidadania_Urbana",
+    "territorio",
+    "evidencia",
+    "direito_dever",
+    "participacao",
+    "acompanhamento"
+  ],
+  "fail_closed": true,
+  "regra_fail_closed": "Artefatos com referência normativa vencida, campo curricular obrigatório ausente, risco de privacidade não tratado ou aprovação institucional exigível não registrada não podem receber status PUBLICADO."
+}
