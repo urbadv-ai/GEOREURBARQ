@@ -1,0 +1,29 @@
+name: OCUE Unit Architecture Validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/arquitetura_unidades_perfis_saida_v1_0.json'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_arquitetura_unidades.py'
+      - '.github/workflows/ocue-unit-architecture-validate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate units, prerequisites and exit profiles
+        run: python observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_arquitetura_unidades.py
+      - name: Upload unit architecture validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocue-unit-architecture-validation
+          path: observatorio-cidadao-urbano-escolar/pedagogico/conteudo/unit_architecture_validation_report.json
+          retention-days: 90
