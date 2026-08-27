@@ -1,0 +1,107 @@
+{
+  "architecture_id": "DDC_UNIDADES_PERFIS_V1",
+  "version": "1.0.0",
+  "status": "EM_AUDITORIA_PEDAGOGICA",
+  "data_base": "2026-08-26",
+  "principio_organizacao": "Os oito eixos semânticos são preservados como conceitos estruturantes, mas agrupados em quatro unidades integradoras para evitar fragmentação e garantir encadeamento didático.",
+  "unidades": [
+    {
+      "codigo": "U1",
+      "nome": "Eu, a cidade e o território coletivo",
+      "eixos": ["E1", "E2"],
+      "pergunta_essencial": "Como a cidade é produzida e vivida, e o que direitos, deveres e bem comum têm a ver com isso?",
+      "etapas_ciclo_dominantes": ["CONHECER", "OBSERVAR"],
+      "conceitos_limiar": ["territorio_nao_e_apenas_localizacao", "direito_nao_e_sinônimo_de_interesse_individual", "cidade_e_bem_coletivo_em_disputa_e_cooperacao"],
+      "pre_requisitos": [],
+      "habilita": ["U2", "U3"]
+    },
+    {
+      "codigo": "U2",
+      "nome": "Ler a cidade: dados, mapas, infraestrutura e ambiente",
+      "eixos": ["E3", "E4"],
+      "pergunta_essencial": "Como sabemos o que acontece no território e quais sistemas sustentam a vida urbana?",
+      "etapas_ciclo_dominantes": ["OBSERVAR", "MAPEAR", "CLASSIFICAR"],
+      "conceitos_limiar": ["observacao_nao_e_diagnostico_tecnico", "evidencia_tem_fonte_escala_e_limite", "cidade_funciona_por_sistemas_interdependentes"],
+      "pre_requisitos": ["U1"],
+      "habilita": ["U3", "U4"]
+    },
+    {
+      "codigo": "U3",
+      "nome": "Quem acessa a cidade? Desigualdades, riscos, planejamento e governança",
+      "eixos": ["E5", "E6"],
+      "pergunta_essencial": "Por que condições urbanas são desiguais e como decisões públicas, planejamento e governança podem enfrentar problemas?",
+      "etapas_ciclo_dominantes": ["MAPEAR", "CLASSIFICAR", "PROPOR"],
+      "conceitos_limiar": ["desigualdade_tem_dimensao_territorial", "correlacao_nao_prova_causalidade", "competencia_institucional_difere_de_responsabilidade_percebida", "politica_publica_difere_de_execucao_e_resultado"],
+      "pre_requisitos": ["U1", "U2"],
+      "habilita": ["U4"]
+    },
+    {
+      "codigo": "U4",
+      "nome": "Da evidência à participação: Projeto Cidadão Urbano",
+      "eixos": ["E7", "E8"],
+      "pergunta_essencial": "Como transformar conhecimento territorial em proposta, participação responsável e acompanhamento?",
+      "etapas_ciclo_dominantes": ["PROPOR", "PARTICIPAR", "ACOMPANHAR"],
+      "conceitos_limiar": ["participacao_nao_se_reduz_a_reclamacao", "proposta_precisa_corresponder_a_evidencia_e_competencia", "resposta_publica_nao_e_medida_unica_de_aprendizagem", "acompanhar_e_parte_do_exercicio_cidadao"],
+      "pre_requisitos": ["U1", "U2", "U3"],
+      "habilita": []
+    }
+  ],
+  "niveis": [
+    {
+      "codigo": "N1",
+      "etapa": "5º ano do Ensino Fundamental",
+      "carga_horaria_total": 12,
+      "distribuicao_horas": {"U1": 2, "U2": 3, "U3": 3, "U4": 4},
+      "perfil_saida": [
+        "reconhece a cidade como território coletivo em transformação e identifica situações concretas relacionadas a direitos e deveres",
+        "produz e interpreta registros territoriais simples, distinguindo mapa, fotografia, relato e dado",
+        "identifica infraestrutura, serviços, questões ambientais e desigualdades observáveis no entorno sem generalizar além da evidência",
+        "reconhece que órgãos públicos possuem funções distintas e que a participação utiliza canais próprios",
+        "elabora coletivamente uma proposta simples e respeitosa baseada em observação e participa de forma guiada ou simulada",
+        "compreende que acompanhar respostas e refletir sobre resultados faz parte da cidadania"
+      ],
+      "produto_final": "Mapa Cidadão do Entorno",
+      "nivel_autonomia": "GUIADO_COLETIVO"
+    },
+    {
+      "codigo": "N2",
+      "etapa": "6º ao 9º ano do Ensino Fundamental",
+      "carga_horaria_total": 16,
+      "distribuicao_horas": {"U1": 3, "U2": 4, "U3": 4, "U4": 5},
+      "perfil_saida": [
+        "analisa transformações e usos do espaço urbano relacionando diferentes agentes e escalas",
+        "interpreta e produz mapas, gráficos e outras evidências, registrando fonte, escala e limites",
+        "analisa infraestrutura, ambiente, segregação, vulnerabilidade, acessibilidade e desigualdade territorial sem estigmatização",
+        "relaciona problemas urbanos a agentes, políticas e competências institucionais em nível introdutório",
+        "constrói proposta argumentada e seleciona canal de participação coerente com a questão analisada",
+        "documenta encaminhamento e acompanhamento, distinguindo resultado externo da qualidade da aprendizagem"
+      ],
+      "produto_final": "Dossiê Territorial Escolar",
+      "nivel_autonomia": "INVESTIGACAO_MEDIADA"
+    },
+    {
+      "codigo": "N3",
+      "etapa": "Ensino Médio",
+      "carga_horaria_total": 20,
+      "distribuicao_horas": {"U1": 4, "U2": 5, "U3": 5, "U4": 6},
+      "perfil_saida": [
+        "problematiza a produção do espaço urbano relacionando territorialidades, agentes, poder, economia, cultura e ambiente",
+        "formula pergunta investigativa e triangula evidências qualitativas, quantitativas, cartográficas e documentais, explicitando incerteza e limite inferencial",
+        "analisa sistemas urbanos, desigualdades, riscos e justiça territorial à luz de direitos humanos e dados verificáveis",
+        "distingue norma, competência, planejamento, política pública, execução administrativa e resultado",
+        "elabora proposta fundamentada e estratégia de participação que considere pluralidade, competência institucional e comunicação pública responsável",
+        "avalia respostas e desdobramentos com critérios definidos, produzindo reflexão metodológica e cidadã"
+      ],
+      "produto_final": "Projeto Cidadão Urbano + Relatório OCUE",
+      "nivel_autonomia": "INVESTIGACAO_E_INTERVENCAO_RESPONSAVEL"
+    }
+  ],
+  "regras_transversais": [
+    "cada_unidade_deve_conectar_conceito_territorio_e_evidencia",
+    "nenhuma_atividade_de_participacao_real_ocorre_sem_autorizacao_e_protocolo_aplicavel",
+    "ODS_entra_por_justificativa_semantica_e_nao_por_quantidade",
+    "avaliacao_mede_aprendizagem_e_rigor_e_nao_quantidade_de_ocorrencias_ou_resposta_favoravel",
+    "a_complexidade_aumenta_sem_mudar_a_ontologia_nuclear",
+    "cada_nivel_deve_terminar_com_produto_integrador_rastreavel"
+  ]
+}
