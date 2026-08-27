@@ -1,0 +1,28 @@
+name: OCUE Integrated Semantic Matrix Validation
+
+on:
+  push:
+    branches: [conteudo-programatico-v1]
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/matriz_semantica_ods_temas_direitos_ciclo_v1_0.csv'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_matriz_semantica_integrada.py'
+      - 'observatorio-cidadao-urbano-escolar/catalogos/**'
+      - '.github/workflows/ocue-matriz-semantica-integrada-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate integrated semantic matrix
+        run: python observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_matriz_semantica_integrada.py
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocue-integrated-semantic-matrix-validation
+          path: observatorio-cidadao-urbano-escolar/pedagogico/conteudo/matriz_semantica_integrada_validation_report.json
