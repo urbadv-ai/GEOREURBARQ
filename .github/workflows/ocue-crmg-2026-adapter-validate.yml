@@ -1,0 +1,28 @@
+name: OCUE CRMG 2026 Adapter Validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/adaptadores/**'
+      - '.github/workflows/ocue-crmg-2026-adapter-validate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate CRMG 2026 semantic adapter
+        run: python observatorio-cidadao-urbano-escolar/pedagogico/conteudo/adaptadores/validate_adaptador_crmg_2026.py
+      - name: Upload CRMG adapter validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocue-crmg-2026-adapter-validation
+          path: observatorio-cidadao-urbano-escolar/pedagogico/conteudo/adaptadores/adaptador_crmg_2026_validation_report.json
+          retention-days: 90
