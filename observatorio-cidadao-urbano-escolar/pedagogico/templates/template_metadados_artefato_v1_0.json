@@ -1,0 +1,55 @@
+{
+  "artefato_id": "",
+  "titulo": "",
+  "tipo_artefato": "",
+  "versao": "0.1.0",
+  "status": "RASCUNHO",
+  "data_elaboracao": "",
+  "data_verificacao_normativa": "",
+  "proxima_revisao_normativa": "",
+  "programa": "Programa Educacional para Cidades e Cidadania",
+  "conteudo_estruturante": "Direitos e Deveres da Cidade",
+  "observatorio": "Observatório Cidadão Urbano Escolar",
+  "metodologia": "Ciclo de Cidadania Urbana",
+  "autoria_institucional": [],
+  "responsaveis": {
+    "coordenacao": "",
+    "pedagogico": "",
+    "juridico_normativo": "",
+    "curricular": "",
+    "inclusao_acessibilidade": "",
+    "privacidade_dados": ""
+  },
+  "publico_alvo": {
+    "etapa_modalidade": "",
+    "ano_escolar": [],
+    "faixa_etaria_referencial": ""
+  },
+  "insercao_curricular": {
+    "modo": "",
+    "rede_sistema": "",
+    "curriculo_versao": "",
+    "plano_curso_versao": "",
+    "ppp_referencia": ""
+  },
+  "alinhamentos": {
+    "competencias_gerais_bncc": [],
+    "habilidades_bncc": [],
+    "habilidades_rede": [],
+    "tct": [],
+    "ods": [],
+    "temas_ocue": [],
+    "etapas_ciclo": []
+  },
+  "carga_horaria_minutos": 0,
+  "territorio_aplicacao": "",
+  "privacidade": {
+    "trata_dados_pessoais": false,
+    "trata_imagem_audio": false,
+    "usa_geolocalizacao": false,
+    "produto_digital_acessivel_a_menores": false
+  },
+  "aprovacoes": [],
+  "fontes": [],
+  "historico_versoes": []
+}
