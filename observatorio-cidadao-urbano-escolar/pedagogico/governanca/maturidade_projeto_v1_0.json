@@ -1,0 +1,30 @@
+{
+  "model_id": "OCUE_MATURIDADE_V1",
+  "version": "1.0.0",
+  "status": "ATIVO",
+  "data_base": "2026-08-26",
+  "objetivo": "Mensurar de forma objetiva o avanço do Programa Educacional para Cidades e Cidadania até a liberação da versão 1.0 para formação docente, aplicação em sala, escala e encerramento formal.",
+  "score_atual": 41.45,
+  "score_atual_arredondado": 41,
+  "classificacao_atual": "FUNDACAO_E_ARQUITETURA_CONSOLIDADAS_CONTEUDO_EXECUTAVEL_AINDA_INCOMPLETO",
+  "dimensoes": [
+    {"id":"D1","nome":"governanca_normativa_e_PCPM","peso":12,"score":100,"contribuicao":12.0},
+    {"id":"D2","nome":"infraestrutura_dados_OCUE_IDSC","peso":10,"score":95,"contribuicao":9.5},
+    {"id":"D3","nome":"arquitetura_pedagogica_e_templates","peso":10,"score":100,"contribuicao":10.0},
+    {"id":"D4","nome":"conteudo_programatico_e_matriz_curricular_preenchidos","peso":18,"score":15,"contribuicao":2.7},
+    {"id":"D5","nome":"materiais_do_estudante","peso":12,"score":5,"contribuicao":0.6},
+    {"id":"D6","nome":"formacao_de_professores","peso":12,"score":5,"contribuicao":0.6},
+    {"id":"D7","nome":"PAP_OCUE_e_implantacao_escolar","peso":8,"score":35,"contribuicao":2.8},
+    {"id":"D8","nome":"ferramentas_de_coleta_e_aplicacao","peso":5,"score":40,"contribuicao":2.0},
+    {"id":"D9","nome":"aprovacoes_e_parcerias_para_piloto","peso":5,"score":10,"contribuicao":0.5},
+    {"id":"D10","nome":"piloto_em_campo_e_validacao","peso":5,"score":0,"contribuicao":0.0},
+    {"id":"D11","nome":"monitoramento_impacto_e_escala","peso":3,"score":25,"contribuicao":0.75}
+  ],
+  "marcos": [
+    {"nome":"PRONTO_PARA_FORMACAO_DOCENTE_PILOTO","score_minimo":75,"criterios_adicionais":["conteudo_programatico_v1_aprovado","matriz_curricular_preenchida_e_auditada","manual_do_professor","curso_de_formacao_com_planos_e_avaliacao","kit_de_simulacao_de_aulas"]},
+    {"nome":"PRONTO_PARA_PILOTO_EM_SALA","score_minimo":85,"criterios_adicionais":["professores_piloto_formados","materiais_do_estudante_prontos","PAP_OCUE_instanciado_para_escola","privacidade_e_autorizacoes_tratadas","instrumentos_de_avaliacao_e_coleta_prontos","aprovacoes_institucionais_do_piloto"]},
+    {"nome":"PRONTO_PARA_APLICACAO_REGULAR_ESCALAVEL","score_minimo":95,"criterios_adicionais":["piloto_concluido","correcoes_pos_piloto_incorporadas","indicadores_de_aprendizagem_e_operacao_validados","manual_de_implantacao_por_rede","pacote_de_formacao_replicavel","governanca_de_suporte_e_atualizacao"]},
+    {"nome":"VERSAO_1_0_FINALIZADA","score_minimo":100,"criterios_adicionais":["release_v1_publicada","documentacao_final_versionada","aprovação_institucional_registrada","pacotes_professor_aluno_gestao_e_OCUE_publicados","dashboard_de_monitoramento_definido","ciclo_de_revisao_continua_ativado"]}
+  ],
+  "regra": "O percentual global não substitui gates críticos. Um marco somente pode ser declarado quando o score mínimo e todos os critérios adicionais correspondentes estiverem satisfeitos."
+}
