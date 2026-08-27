@@ -1,0 +1,143 @@
+{
+  "assessment_id": "DDC_AVALIACAO_V1",
+  "version": "1.0.0",
+  "status": "EM_AUDITORIA_PEDAGOGICA",
+  "principio": "A avaliação mede aprendizagem, rigor metodológico, qualidade do uso de evidências, leitura territorial, responsabilidade cidadã e reflexão. Não mede sucesso político da proposta, quantidade de ocorrências registradas ou obtenção de resposta favorável do poder público.",
+  "momentos": [
+    {
+      "codigo":"A0",
+      "nome":"diagnostica",
+      "finalidade":"identificar repertório inicial sobre cidade, direitos/deveres, mapas, evidência e participação sem efeito punitivo"
+    },
+    {
+      "codigo":"A1",
+      "nome":"formativa_por_ciclo",
+      "finalidade":"produzir devolutiva durante CONHECER, OBSERVAR, MAPEAR, CLASSIFICAR, PROPOR, PARTICIPAR e ACOMPANHAR, permitindo revisão do produto"
+    },
+    {
+      "codigo":"A2",
+      "nome":"produto_integrador",
+      "finalidade":"avaliar coerência do percurso completo e transferência da aprendizagem para um problema territorial"
+    },
+    {
+      "codigo":"A3",
+      "nome":"metacognitiva",
+      "finalidade":"avaliar como o estudante reconhece limites da informação, revisa hipóteses, considera outras perspectivas e interpreta resultados"
+    }
+  ],
+  "dimensoes": [
+    {
+      "codigo":"R1",
+      "nome":"Precisão conceitual",
+      "peso_padrao":15,
+      "descritores":{
+        "1":"confunde conceitos centrais ou utiliza afirmações incompatíveis com o conteúdo trabalhado",
+        "2":"reconhece conceitos, mas estabelece relações incompletas ou imprecisas",
+        "3":"utiliza corretamente conceitos e estabelece relações pertinentes no caso analisado",
+        "4":"integra conceitos, diferencia categorias próximas e explicita limites ou tensões conceituais"
+      }
+    },
+    {
+      "codigo":"R2",
+      "nome":"Evidência, fonte e rastreabilidade",
+      "peso_padrao":20,
+      "descritores":{
+        "1":"faz afirmações sem evidência identificável ou confunde opinião com dado",
+        "2":"apresenta evidência, mas fonte, contexto ou vínculo com a afirmação são incompletos",
+        "3":"relaciona afirmação, evidência e fonte de modo verificável e proporcional",
+        "4":"triangula fontes quando adequado, avalia confiabilidade e distingue observação, dado oficial, indicador e validação técnica"
+      }
+    },
+    {
+      "codigo":"R3",
+      "nome":"Leitura espacial, escala e representação",
+      "peso_padrao":15,
+      "descritores":{
+        "1":"localização/representação é ausente ou leva a interpretação espacial inadequada",
+        "2":"representa o território com elementos básicos, mas apresenta limitações de escala, legenda ou comparação",
+        "3":"utiliza mapa/representação adequadamente e respeita a escala da evidência",
+        "4":"articula escalas, reconhece padrões espaciais e explicita por que uma inferência pode ou não ser feita"
+      }
+    },
+    {
+      "codigo":"R4",
+      "nome":"Equidade, pluralidade e justiça territorial",
+      "peso_padrao":10,
+      "descritores":{
+        "1":"ignora grupos afetados ou utiliza generalizações/estigmas",
+        "2":"reconhece diferenças, mas sem integrar adequadamente impactos e perspectivas",
+        "3":"considera grupos, barreiras e distribuição desigual de impactos com linguagem respeitosa",
+        "4":"compara perspectivas, identifica assimetrias territoriais e incorpora equidade à análise/proposta"
+      }
+    },
+    {
+      "codigo":"R5",
+      "nome":"Raciocínio problema-proposta e competência",
+      "peso_padrao":15,
+      "descritores":{
+        "1":"proposta não responde ao problema/evidência ou atribui competência sem fundamento",
+        "2":"proposta é relacionada ao problema, mas viabilidade, destinatário ou justificativa são frágeis",
+        "3":"proposta é proporcional às evidências e dirigida a agente/canal plausível e verificado",
+        "4":"compara alternativas, explicita critérios e distingue competência, política, execução e resultado quando aplicável"
+      }
+    },
+    {
+      "codigo":"R6",
+      "nome":"Argumentação e comunicação cidadã",
+      "peso_padrao":10,
+      "descritores":{
+        "1":"mensagem é desorganizada, ofensiva ou sem relação clara entre afirmação e fundamento",
+        "2":"comunica a ideia central, mas apresenta lacunas de evidência, organização ou adequação ao destinatário",
+        "3":"argumenta de forma clara, respeitosa, verificável e adequada ao público/canal",
+        "4":"antecipa contrapontos, comunica incertezas e adapta linguagem sem perder precisão"
+      }
+    },
+    {
+      "codigo":"R7",
+      "nome":"Participação, ética e responsabilidade",
+      "peso_padrao":5,
+      "descritores":{
+        "1":"não respeita protocolo, privacidade, segurança ou regras de participação",
+        "2":"segue parcialmente os procedimentos, necessitando mediação frequente",
+        "3":"atua dentro dos protocolos, respeita privacidade, segurança e pluralidade",
+        "4":"demonstra autonomia responsável, reconhece limites de atuação e contribui para procedimento coletivo seguro"
+      }
+    },
+    {
+      "codigo":"R8",
+      "nome":"Acompanhamento, reflexão e revisão",
+      "peso_padrao":10,
+      "descritores":{
+        "1":"encerra o processo após a proposta sem registrar resultado ou refletir sobre aprendizagem",
+        "2":"registra desdobramento, mas a reflexão é predominantemente descritiva",
+        "3":"analisa resposta, pendência ou ausência de resposta e identifica aprendizados/limites",
+        "4":"revê hipótese ou proposta com base nos desdobramentos e distingue resultado externo de qualidade do processo de aprendizagem"
+      }
+    }
+  ],
+  "pesos_por_nivel":{
+    "N1":{"R1":20,"R2":15,"R3":15,"R4":10,"R5":10,"R6":15,"R7":5,"R8":10},
+    "N2":{"R1":15,"R2":20,"R3":15,"R4":10,"R5":15,"R6":10,"R7":5,"R8":10},
+    "N3":{"R1":10,"R2":20,"R3":15,"R4":10,"R5":20,"R6":10,"R7":5,"R8":10}
+  },
+  "evidencias_minimas_por_nivel":{
+    "N1":["registro_observacao", "representacao_territorial_simples", "relacao_direito_dever", "proposta_coletiva", "reflexao_acompanhamento"],
+    "N2":["pergunta_investigativa", "mapa_ou_grafico", "fonte_identificada", "analise_grupo_territorio", "proposta_argumentada", "registro_participacao_acompanhamento"],
+    "N3":["pergunta_e_hipotese", "matriz_de_evidencias", "cartografia_analitica", "analise_de_desigualdade_ou_sistema", "matriz_competencia_politica", "proposta_com_alternativas", "estrategia_participacao", "relatorio_reflexivo"]
+  },
+  "regras_fail_closed":[
+    "nenhum_estudante_recebe_pontuacao_maior_por_obter_resposta_favoravel_da_autoridade",
+    "quantidade_de_ocorrencias_nao_e_indicador_de_aprendizagem",
+    "evidencia_sem_fonte_ou_contexto_nao_pode_receber_nivel_maximo_em_R2",
+    "generalizacao_de_dado_municipal_para_bairro_ou_escola_impede_nivel_maximo_em_R2_e_R3",
+    "violacao_de_privacidade_ou_seguranca_impede_nivel_maximo_em_R7",
+    "atividade_de_participacao_real_sem_autorizacao_nao_pode_integrar_avaliacao_canonica"
+  ],
+  "regra_calculo":"Cada dimensão recebe nível 1-4. Converter o nível em 25%, 50%, 75% ou 100% do peso da dimensão. A escola pode usar conceito em vez de nota, preservando os descritores.",
+  "faixas_interpretacao":{
+    "0_49":"evidencias_insuficientes_requer_reensino_e_revisao",
+    "50_69":"aprendizagem_em_desenvolvimento_requer_revisao_orientada",
+    "70_84":"aprendizagem_adequada_com_pontos_de_aprimoramento",
+    "85_100":"aprendizagem_consolidada_com_rigor_e_autonomia_compativeis_com_o_nivel"
+  }
+}
