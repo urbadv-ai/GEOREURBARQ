@@ -1,0 +1,28 @@
+name: OCUE Maturity Snapshot Validation
+
+on:
+  push:
+    branches: [conteudo-programatico-v1]
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/governanca/maturidade_projeto_v1_0.json'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/governanca/maturidade_projeto_v1_1.json'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/governanca/REGISTRO_MESTRE_EXECUCAO_v1_0.json'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/governanca/validate_maturidade_projeto.py'
+      - '.github/workflows/ocue-maturidade-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate maturity snapshot
+        run: python observatorio-cidadao-urbano-escolar/pedagogico/governanca/validate_maturidade_projeto.py
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocue-maturidade-validation
+          path: observatorio-cidadao-urbano-escolar/pedagogico/governanca/maturidade_validation_report.json
