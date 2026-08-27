@@ -1,0 +1,25 @@
+{
+  "dataset_id": "PCPM_OCUE",
+  "version": "1.0.0",
+  "status": "APROVADO",
+  "validated_at_utc": "2026-08-27",
+  "validated_at_local": "2026-08-26",
+  "github_actions_run_id": 33032243207,
+  "artifact_id": 9630666190,
+  "artifact_sha256": "b755ebc6cdf0795a58d44fefdb3964bf4a096bf2e004b975b80eae4308b27f71",
+  "checks": {
+    "ocue_bootstrap_status": "APROVADO",
+    "idsc_status": "APROVADO",
+    "protocol_id": "PCPM_OCUE",
+    "protocol_version": "1.0.0",
+    "gate_count": 13,
+    "curricular_modes": 7,
+    "normative_age_days_at_validation": 1,
+    "normative_max_days": 90,
+    "normative_reference_count": 21,
+    "alignment_matrix_columns": 27,
+    "rubric_criteria_count": 22,
+    "rubric_critical_count": 15
+  },
+  "errors": []
+}
