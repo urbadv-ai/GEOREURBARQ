@@ -1,0 +1,28 @@
+name: OCUE Canonical Glossary Validation
+
+on:
+  push:
+    branches: [conteudo-programatico-v1]
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/glossario_canonico_direitos_deveres_cidade_v1_0.csv'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/glossario_fontes_v1_0.json'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_glossario_canonico.py'
+      - '.github/workflows/ocue-glossario-canonico-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate canonical glossary
+        run: python observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_glossario_canonico.py
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocue-canonical-glossary-validation
+          path: observatorio-cidadao-urbano-escolar/pedagogico/conteudo/glossario_canonico_validation_report.json
