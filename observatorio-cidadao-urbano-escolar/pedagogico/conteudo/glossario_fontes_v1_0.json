@@ -1,0 +1,20 @@
+{
+  "artifact_id": "OCUE_GLOSSARIO_FONTES_V1",
+  "version": "1.0.0",
+  "data_verificacao": "2026-08-27",
+  "fontes": {
+    "CF88": {"tipo":"oficial_externa","titulo":"Constituição da República Federativa do Brasil","url":"https://www.planalto.gov.br/ccivil_03/constituicao/constituicaocompilado.htm"},
+    "CF88_ART182": {"tipo":"oficial_externa","titulo":"Constituição Federal - art. 182","url":"https://www.planalto.gov.br/ccivil_03/constituicao/constituicaocompilado.htm"},
+    "EC": {"tipo":"oficial_externa","titulo":"Lei 10.257/2001 - Estatuto da Cidade","url":"https://www.planalto.gov.br/ccivil_03/leis/leis_2001/l10257.htm"},
+    "EC_ART1": {"tipo":"oficial_externa","titulo":"Estatuto da Cidade - art. 1","url":"https://www.planalto.gov.br/ccivil_03/leis/leis_2001/l10257.htm"},
+    "EC_ART2": {"tipo":"oficial_externa","titulo":"Estatuto da Cidade - art. 2","url":"https://www.planalto.gov.br/ccivil_03/leis/leis_2001/l10257.htm"},
+    "BNCC": {"tipo":"oficial_externa","titulo":"Base Nacional Comum Curricular","url":"https://basenacionalcomum.mec.gov.br/images/BNCC_EI_EF_110518_versaofinal_site.pdf"},
+    "ONU_AGENDA2030": {"tipo":"oficial_externa","titulo":"Agenda 2030 para o Desenvolvimento Sustentável - ONU Brasil","url":"https://brasil.un.org/pt-br/91863-agenda-2030-para-o-desenvolvimento-sustent%C3%A1vel"},
+    "IDSC_METODOLOGIA": {"tipo":"fonte_metodologica_externa","titulo":"IDSC-BR - Metodologia","url":"https://idsc.cidadessustentaveis.org.br/methodology"},
+    "OCUE_ONTOLOGIA": {"tipo":"interna_versionada","path":"pedagogico/conteudo/ontologia_semantica_direitos_deveres_cidade_v1_0.json"},
+    "OCUE_CATALOGO_DD": {"tipo":"interna_versionada","path":"catalogos/catalogo_direitos_deveres_v1_0.csv"},
+    "OCUE_CATALOGO_TEMAS": {"tipo":"interna_versionada","path":"catalogos/catalogo_temas_urbanos_v1_0.csv"},
+    "OCUE_CICLO": {"tipo":"interna_versionada","path":"catalogos/catalogo_ciclo_cidadania_urbana_v1_0.csv"}
+  },
+  "regra": "As definições do glossário são operacionais e pedagógicas. Referência normativa não transforma o glossário em parecer jurídico nem autoriza conclusão sobre caso concreto."
+}
