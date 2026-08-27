@@ -1,0 +1,29 @@
+name: OCUE Content Semantic Validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/**'
+      - 'observatorio-cidadao-urbano-escolar/catalogos/**'
+      - '.github/workflows/ocue-content-semantic-validate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate semantic curriculum architecture
+        run: python observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_conteudo_semantico.py
+      - name: Upload semantic validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocue-content-semantic-validation
+          path: observatorio-cidadao-urbano-escolar/pedagogico/conteudo/semantic_validation_report.json
+          retention-days: 90
