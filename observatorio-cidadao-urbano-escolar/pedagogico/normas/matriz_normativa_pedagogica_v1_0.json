@@ -1,0 +1,212 @@
+{
+  "matrix_id": "OCUE_NORM_PED_V1_0",
+  "verified_at": "2026-08-26",
+  "review_due": "2026-11-24",
+  "regra": "A matriz deve ser revista antes de cada nova versão pedagógica e sempre que houver alteração legislativa, normativa, curricular ou institucional relevante.",
+  "nota_abnt": "As normas ABNT abaixo são adotadas como padrão interno de normalização e produção documental. Não constituem, por si sós, exigência curricular do MEC nem substituem a legislação educacional e as normas da rede de ensino.",
+  "referencias": [
+    {
+      "id":"FED_LDB_9394",
+      "autoridade":"Presidência da República",
+      "tipo":"LEI_FEDERAL",
+      "ato":"Lei nº 9.394/1996 - LDB, texto compilado",
+      "status_aplicacao":"OBRIGATORIO",
+      "escopo":"educação básica nacional",
+      "pontos_controle":["proposta pedagógica","participação docente","gestão democrática","base nacional comum e parte diversificada","direitos e deveres dos cidadãos"],
+      "url":"https://www.planalto.gov.br/ccivil_03/leis/l9394compilado.htm"
+    },
+    {
+      "id":"CNE_DCN_GERAIS_4_2010",
+      "autoridade":"Conselho Nacional de Educação",
+      "tipo":"RESOLUCAO_CNE_CEB",
+      "ato":"Resolução CNE/CEB nº 4/2010 - Diretrizes Curriculares Nacionais Gerais para a Educação Básica",
+      "status_aplicacao":"OBRIGATORIO_QUANDO_APLICAVEL",
+      "escopo":"educação básica",
+      "pontos_controle":["formação integral","cidadania","PPP","currículo","avaliação"],
+      "url":"https://www.gov.br/mec/pt-br/cne/pdf/normas-classificadas-por-assunto/diretrizes-para-a-educacao-basica/rceb004_10.pdf/view"
+    },
+    {
+      "id":"MEC_BNCC",
+      "autoridade":"Ministério da Educação / CNE",
+      "tipo":"REFERENCIAL_CURRICULAR_NORMATIVO",
+      "ato":"Base Nacional Comum Curricular - BNCC",
+      "status_aplicacao":"OBRIGATORIO_COMO_REFERENCIAL_CURRICULAR",
+      "escopo":"educação básica",
+      "pontos_controle":["competências gerais","competências específicas","habilidades","progressão das aprendizagens","formação humana integral"],
+      "url":"https://basenacionalcomum.mec.gov.br/"
+    },
+    {
+      "id":"CNE_EDH_1_2012",
+      "autoridade":"Conselho Nacional de Educação",
+      "tipo":"RESOLUCAO_CNE_CP",
+      "ato":"Resolução CNE/CP nº 1/2012 - Diretrizes Nacionais para a Educação em Direitos Humanos",
+      "status_aplicacao":"OBRIGATORIO_QUANDO_APLICAVEL",
+      "escopo":"sistemas e instituições de ensino",
+      "pontos_controle":["PPP","materiais didáticos","gestão","avaliação","inserção transversal/interdisciplinar, específica ou mista"],
+      "url":"https://www.gov.br/mec/pt-br/cne/pdf/normas-classificadas-por-assunto/direitos-humanos-cne/rcp001_12.pdf/view"
+    },
+    {
+      "id":"FED_PNEA_9795",
+      "autoridade":"Presidência da República",
+      "tipo":"LEI_FEDERAL",
+      "ato":"Lei nº 9.795/1999 - Política Nacional de Educação Ambiental",
+      "status_aplicacao":"OBRIGATORIO_QUANDO_APLICAVEL",
+      "escopo":"educação ambiental no ensino formal",
+      "pontos_controle":["prática integrada, contínua e permanente","não implantação como disciplina específica","clima, biodiversidade, riscos e emergências socioambientais nos projetos pedagógicos"],
+      "url":"https://www.planalto.gov.br/ccivil_03/leis/l9795.htm"
+    },
+    {
+      "id":"CNE_EA_2_2012",
+      "autoridade":"Conselho Nacional de Educação",
+      "tipo":"RESOLUCAO_CNE_CP",
+      "ato":"Resolução CNE/CP nº 2/2012 - Diretrizes Curriculares Nacionais para a Educação Ambiental",
+      "status_aplicacao":"OBRIGATORIO_QUANDO_APLICAVEL",
+      "escopo":"educação ambiental",
+      "pontos_controle":["integração curricular","interdisciplinaridade","projetos institucionais e pedagógicos"],
+      "url":"https://www.gov.br/mec/pt-br/cne/pdf/normas-classificadas-por-assunto/educacao-ambiental/rcp002_12.pdf/view"
+    },
+    {
+      "id":"MEC_TCT_GUIA",
+      "autoridade":"Ministério da Educação",
+      "tipo":"GUIA_ORIENTATIVO",
+      "ato":"Guia Prático dos Temas Contemporâneos Transversais - TCT/BNCC",
+      "status_aplicacao":"REFERENCIAL_METODOLOGICO",
+      "escopo":"currículo, projeto pedagógico e plano de aula",
+      "pontos_controle":["contextualização","intra/inter/transdisciplinaridade","integração de componentes","abordagem no PP","abordagem no plano de aula"],
+      "url":"https://www.gov.br/mec/pt-br/assuntos/eb/guia_pratico_temas_contemporaneos.pdf"
+    },
+    {
+      "id":"MEC_ORIENTACOES_PP",
+      "autoridade":"Ministério da Educação / Consed / Undime",
+      "tipo":"GUIA_ORIENTATIVO",
+      "ato":"Orientações para Revisão dos Projetos Pedagógicos à Luz dos Novos Currículos",
+      "status_aplicacao":"REFERENCIAL_DE_ESTRUTURA_E_PROCESSO",
+      "escopo":"projeto pedagógico escolar",
+      "pontos_controle":["contextualização e caracterização","diagnóstico","missão, visão e princípios","fundamentação teórica e bases legais","plano de ação","participação e validação"],
+      "url":"https://basenacionalcomum.mec.gov.br/images/implementacao/orientacoes_projeto_pedagogico.pdf"
+    },
+    {
+      "id":"MEC_CRITERIOS_CURRICULO",
+      "autoridade":"Ministério da Educação",
+      "tipo":"RUBRICA_ORIENTATIVA",
+      "ato":"Critérios de Leitura de Currículos dos Estados",
+      "status_aplicacao":"REFERENCIAL_DE_QUALIDADE",
+      "escopo":"elaboração e leitura curricular",
+      "pontos_controle":["desenvolvimento integral","progressão","contextualização","aprofundamento","coerência","aprendizagem ativa","diversidade e inclusão","avaliação formativa"],
+      "url":"https://basenacionalcomum.mec.gov.br/implementacao/pro-bncc/material-de-apoio/"
+    },
+    {
+      "id":"MG_CRMG_2026",
+      "autoridade":"SEE/MG / CEE-MG",
+      "tipo":"CURRICULO_ESTADUAL",
+      "ato":"Currículo Referência de Minas Gerais - versão vigente consultada em 2026",
+      "status_aplicacao":"OBRIGATORIO_PARA_ADAPTADOR_REDE_ESTADUAL_MG",
+      "escopo":"rede/sistema mineiro conforme normatização aplicável",
+      "pontos_controle":["competências","habilidades","contextualização","planejamento","avaliação"],
+      "url":"https://portalpedagogico.educacao.mg.gov.br/estrutura-curricular-e-ensino/ensino-fundamental/ensino-fundamental-anos-iniciais/"
+    },
+    {
+      "id":"MG_PLANOS_CURSO",
+      "autoridade":"SEE/MG",
+      "tipo":"PLANO_DE_CURSO_ORIENTADOR",
+      "ato":"Planos de Curso SEE/MG / CRMG",
+      "status_aplicacao":"REFERENCIAL_CURRICULAR_DA_REDE",
+      "escopo":"planejamento docente por etapa/ano/componente",
+      "pontos_controle":["habilidades","objetos/conteúdos","orientações didático-metodológicas","planejamento","avaliação"],
+      "url":"https://curriculoreferencia.educacao.mg.gov.br/index.php/plano-de-cursos-crmg?showall=1"
+    },
+    {
+      "id":"MG_SEE_4948_2024",
+      "autoridade":"SEE/MG",
+      "tipo":"RESOLUCAO_ESTADUAL",
+      "ato":"Resolução SEE nº 4.948/2024",
+      "status_aplicacao":"VERIFICAR_ENQUADRAMENTO_DA_UNIDADE_ESCOLAR",
+      "escopo":"unidades abrangidas pela norma estadual",
+      "pontos_controle":["PPP e Regimento como documentos formais","construção coletiva","identidade territorial","projetos e parcerias","aprovação pelo Colegiado","registro e acompanhamento pela SRE"],
+      "url":"https://www.educacao.mg.gov.br/wp-content/uploads/2024/01/4948-24-r-Public.-26-01-24.pdf"
+    },
+    {
+      "id":"MG_SEE_5212_2025",
+      "autoridade":"SEE/MG",
+      "tipo":"RESOLUCAO_ESTADUAL",
+      "ato":"Resolução SEE nº 5.212/2025 - matrizes curriculares para 2026",
+      "status_aplicacao":"OBRIGATORIO_PARA_REDE_ESTADUAL_MG_2026",
+      "escopo":"rede estadual de Minas Gerais",
+      "pontos_controle":["matriz curricular","carga horária","componentes curriculares","atividades complementares"],
+      "url":"https://www.educacao.mg.gov.br/wp-content/uploads/2025/11/Resolucao-SEE-no-5.212_2025.pdf"
+    },
+    {
+      "id":"LGPD_CRIANCAS",
+      "autoridade":"Presidência da República / ANPD",
+      "tipo":"PROTECAO_DE_DADOS",
+      "ato":"Lei nº 13.709/2018, art. 14, e Enunciado CD/ANPD nº 1/2023",
+      "status_aplicacao":"OBRIGATORIO_QUANDO_HOUVER_TRATAMENTO_DE_DADOS_PESSOAIS",
+      "escopo":"dados pessoais de crianças e adolescentes",
+      "pontos_controle":["melhor interesse","base legal adequada","minimização","transparência","proteção reforçada"],
+      "url":"https://www.gov.br/anpd/pt-br/assuntos/noticias/anpd-divulga-enunciado-sobre-o-tratamento-de-dados-pessoais-de-criancas-e-adolescentes"
+    },
+    {
+      "id":"ECA_DIGITAL_15211_2025",
+      "autoridade":"Presidência da República",
+      "tipo":"LEI_FEDERAL_DIGITAL",
+      "ato":"Lei nº 15.211/2025 - Estatuto Digital da Criança e do Adolescente",
+      "status_aplicacao":"OBRIGATORIO_QUANDO_HOUVER_PRODUTO_OU_SERVICO_DIGITAL_ABRANGIDO",
+      "escopo":"produtos e serviços digitais direcionados ou de acesso provável por crianças e adolescentes",
+      "pontos_controle":["melhor interesse","privacidade elevada por padrão","proteção de dados","segurança","informação adequada"],
+      "url":"https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15211.htm"
+    },
+    {
+      "id":"DNE_OABMG_2025_2026",
+      "autoridade":"OAB/MG - Comissão Direito na Escola",
+      "tipo":"REFERENCIA_INSTITUCIONAL_PEDAGOGICA",
+      "ato":"Direito na Escola - Origens e Formação de Professores Direito na Escola",
+      "status_aplicacao":"REFERENCIAL_DE_IDENTIDADE_E_METODOLOGIA_DNE",
+      "escopo":"parceria e formação Direito na Escola",
+      "pontos_controle":["fundamentos pedagógicos","Carta de Princípios e Declaração de Valores","prática acessível","gamificação e engajamento","formação de multiplicadores"],
+      "url":"https://www.oabmg.org.br/Agenda/Evento/3373"
+    },
+    {
+      "id":"DNE_MODELOS_MEMBROS",
+      "autoridade":"Direito na Escola",
+      "tipo":"FONTE_COMPLEMENTAR_RESTRITA",
+      "ato":"Curso de Membros - Comunidade DNE",
+      "status_aplicacao":"PENDENTE_DE_ACESSO_E_AUDITORIA_DO_CONTEUDO_INTEGRAL",
+      "escopo":"modelos e materiais internos do programa",
+      "pontos_controle":["modelos de aulas","documentos para escolas e prefeituras","passo a passo"],
+      "nota":"A página pública informa a existência dos modelos, mas não expõe o seu conteúdo integral. Não tratar como template auditado até obtenção oficial.",
+      "url":"https://www.direitonaescola.com.br/cursos/"
+    },
+    {
+      "id":"ABNT_14724",
+      "autoridade":"ABNT",
+      "tipo":"NORMA_TECNICA_DOCUMENTAL",
+      "ato":"ABNT NBR 14724:2024 Versão Corrigida:2025",
+      "status_aplicacao":"PADRAO_INTERNO_DOCUMENTAL",
+      "escopo":"apresentação de trabalhos acadêmicos e similares no que couber"
+    },
+    {
+      "id":"ABNT_6023",
+      "autoridade":"ABNT",
+      "tipo":"NORMA_TECNICA_DOCUMENTAL",
+      "ato":"ABNT NBR 6023:2025",
+      "status_aplicacao":"PADRAO_INTERNO_DOCUMENTAL",
+      "escopo":"referências"
+    },
+    {
+      "id":"ABNT_10520",
+      "autoridade":"ABNT",
+      "tipo":"NORMA_TECNICA_DOCUMENTAL",
+      "ato":"ABNT NBR 10520:2023",
+      "status_aplicacao":"PADRAO_INTERNO_DOCUMENTAL",
+      "escopo":"citações"
+    },
+    {
+      "id":"ABNT_6024_6027_6028",
+      "autoridade":"ABNT",
+      "tipo":"NORMA_TECNICA_DOCUMENTAL",
+      "ato":"ABNT NBR 6024:2012; NBR 6027:2012; NBR 6028:2021",
+      "status_aplicacao":"PADRAO_INTERNO_DOCUMENTAL",
+      "escopo":"numeração progressiva, sumário e resumo"
+    }
+  ]
+}
