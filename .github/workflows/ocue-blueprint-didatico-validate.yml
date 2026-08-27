@@ -1,0 +1,27 @@
+name: OCUE Didactic Blueprint Validation
+
+on:
+  push:
+    branches: [conteudo-programatico-v1]
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/blueprint_didatico_niveis_unidades_v1_0.csv'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/adaptadores/adaptador_crmg_2026_habilidades_v1_0.csv'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_blueprint_didatico.py'
+      - '.github/workflows/ocue-blueprint-didatico-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate didactic blueprint
+        run: python observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_blueprint_didatico.py
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocue-blueprint-didatico-validation
+          path: observatorio-cidadao-urbano-escolar/pedagogico/conteudo/blueprint_didatico_validation_report.json
