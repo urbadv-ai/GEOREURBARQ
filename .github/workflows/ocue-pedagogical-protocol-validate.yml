@@ -1,0 +1,39 @@
+name: OCUE Pedagogical Protocol Validation
+
+on:
+  push:
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/**'
+      - 'observatorio-cidadao-urbano-escolar/metadata/bootstrap_validation_v1_0.json'
+      - 'mg853-p1-id/data/metadata/idsc_quality_checks.json'
+      - '.github/workflows/ocue-pedagogical-protocol-validate.yml'
+  pull_request:
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/**'
+      - '.github/workflows/ocue-pedagogical-protocol-validate.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '15 7 1 * *'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate PCPM-OCUE contract and normative freshness
+        run: python observatorio-cidadao-urbano-escolar/pedagogico/pipeline/validate_pcpm_ocue.py
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pcpm-ocue-validation
+          path: observatorio-cidadao-urbano-escolar/pedagogico/metadata/pcpm_validation_runtime.json
+          if-no-files-found: error
+          retention-days: 90
