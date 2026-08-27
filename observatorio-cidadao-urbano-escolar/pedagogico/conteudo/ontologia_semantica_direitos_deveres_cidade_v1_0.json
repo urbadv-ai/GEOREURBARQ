@@ -1,0 +1,114 @@
+{
+  "ontology_id": "DDC_SEMANTIC_ONTOLOGY",
+  "version": "1.0.0",
+  "status": "EM_AUDITORIA",
+  "data_base": "2026-08-26",
+  "principio": "A cidade é tratada como sistema territorial de direitos, deveres, infraestrutura, ambiente, relações sociais, governança e participação. O estudante progride de percepção situada para análise baseada em evidências e ação cidadã responsável.",
+  "progressao_cognitiva": ["PERCEBER", "NOMEAR", "RELACIONAR", "REPRESENTAR", "ANALISAR", "ARGUMENTAR", "PROPOR", "PARTICIPAR", "ACOMPANHAR"],
+  "faixas": [
+    {"codigo":"N1","etapa":"ENSINO_FUNDAMENTAL_5_ANO","foco":"descoberta_da_cidade_e_participacao_guiada","carga_horaria_minima":12,"complexidade":"concreto_local_guiado"},
+    {"codigo":"N2","etapa":"ENSINO_FUNDAMENTAL_ANOS_FINAIS_6_9","foco":"investigacao_territorial_e_leitura_critica","carga_horaria_minima":16,"complexidade":"comparativo_multiescalar"},
+    {"codigo":"N3","etapa":"ENSINO_MEDIO","foco":"analise_sistemica_argumentacao_e_intervencao_cidada","carga_horaria_minima":20,"complexidade":"sistemico_normativo_evidence_based"}
+  ],
+  "eixos": [
+    {
+      "codigo":"E1",
+      "nome":"Cidade, território e pertencimento",
+      "pergunta_geradora":"Como a cidade é formada, transformada e vivida por diferentes pessoas e grupos?",
+      "conceitos_nucleares":["cidade","territorio","lugar","paisagem","rede_urbana","pertencimento","transformacao_urbana"],
+      "etapas_ciclo":["CONHECER","OBSERVAR"],
+      "temas_ocue":["USO_OCUPACAO_SOLO","PATRIMONIO_PAISAGEM","ECONOMIA_TRABALHO_LOCAL"],
+      "direitos_deveres":["DD01","DD08"],
+      "ods_prioritarios":[8,11]
+    },
+    {
+      "codigo":"E2",
+      "nome":"Direitos, deveres e função social da cidade",
+      "pergunta_geradora":"O que significa viver em uma cidade que atende ao bem coletivo e quais responsabilidades acompanham os direitos urbanos?",
+      "conceitos_nucleares":["cidadania","direitos","deveres","bem_comum","funcao_social_da_cidade","funcao_social_da_propriedade","cidade_sustentavel"],
+      "etapas_ciclo":["CONHECER","CLASSIFICAR"],
+      "temas_ocue":["HABITACAO_REURB","USO_OCUPACAO_SOLO","GOVERNANCA_PARTICIPACAO"],
+      "direitos_deveres":["DD01","DD02","DD10"],
+      "ods_prioritarios":[10,11,16]
+    },
+    {
+      "codigo":"E3",
+      "nome":"Leitura do território, dados e evidências",
+      "pergunta_geradora":"Como transformar observações sobre o território em informação verificável e comunicável?",
+      "conceitos_nucleares":["observacao","evidencia","fonte","dado","indicador","mapa","escala","geolocalizacao","qualidade_da_informacao"],
+      "etapas_ciclo":["OBSERVAR","MAPEAR","CLASSIFICAR"],
+      "temas_ocue":["CONECTIVIDADE_INOVACAO","DESIGUALDADES_TERRITORIAIS"],
+      "direitos_deveres":["DD09","DD10"],
+      "ods_prioritarios":[4,10,11,16,17]
+    },
+    {
+      "codigo":"E4",
+      "nome":"Infraestrutura, serviços, ambiente e qualidade de vida",
+      "pergunta_geradora":"Quais sistemas urbanos sustentam a vida cotidiana e como identificar seu funcionamento, ausência ou inadequação?",
+      "conceitos_nucleares":["saneamento","mobilidade","acessibilidade","drenagem","residuos","energia","equipamentos_publicos","espaco_publico","areas_verdes","qualidade_ambiental"],
+      "etapas_ciclo":["OBSERVAR","MAPEAR","CLASSIFICAR"],
+      "temas_ocue":["MOBILIDADE_ACESSIBILIDADE","AGUA_ESGOTO","DRENAGEM_ALAGAMENTOS","RESIDUOS_LIMPEZA","MEIO_AMBIENTE_AREAS_VERDES","ESPACO_PUBLICO_LAZER","EQUIPAMENTOS_SERVICOS","ENERGIA_ILUMINACAO"],
+      "direitos_deveres":["DD03","DD04","DD05","DD06","DD07","DD11"],
+      "ods_prioritarios":[3,4,6,7,9,11,12,13,15]
+    },
+    {
+      "codigo":"E5",
+      "nome":"Desigualdades, inclusão, riscos e justiça territorial",
+      "pergunta_geradora":"Por que problemas e oportunidades urbanas se distribuem de modo desigual e quem é mais afetado?",
+      "conceitos_nucleares":["desigualdade_territorial","segregacao_socioespacial","barreira","acessibilidade_universal","vulnerabilidade","risco","resiliencia","justica_territorial"],
+      "etapas_ciclo":["MAPEAR","CLASSIFICAR","PROPOR"],
+      "temas_ocue":["DESIGUALDADES_TERRITORIAIS","RISCOS_CLIMA","MOBILIDADE_ACESSIBILIDADE","HABITACAO_REURB"],
+      "direitos_deveres":["DD02","DD03","DD09","DD12"],
+      "ods_prioritarios":[1,5,10,11,13]
+    },
+    {
+      "codigo":"E6",
+      "nome":"Planejamento urbano, políticas públicas e governança",
+      "pergunta_geradora":"Como decisões públicas e regras territoriais influenciam a cidade e como podem ser avaliadas?",
+      "conceitos_nucleares":["politica_urbana","planejamento","plano_diretor","uso_do_solo","politica_publica","competencia_publica","governanca","interesse_social","accountability"],
+      "etapas_ciclo":["CONHECER","CLASSIFICAR","PROPOR"],
+      "temas_ocue":["USO_OCUPACAO_SOLO","GOVERNANCA_PARTICIPACAO","EQUIPAMENTOS_SERVICOS","HABITACAO_REURB"],
+      "direitos_deveres":["DD01","DD02","DD07","DD10"],
+      "ods_prioritarios":[11,16,17]
+    },
+    {
+      "codigo":"E7",
+      "nome":"Participação, diálogo e controle social",
+      "pergunta_geradora":"Como uma observação fundamentada pode chegar ao canal público adequado e ser acompanhada de forma democrática?",
+      "conceitos_nucleares":["participacao_social","ouvidoria","protocolo","conselho","audiencia_publica","consulta_publica","camara_municipal","argumentacao","acesso_a_informacao","controle_social"],
+      "etapas_ciclo":["PROPOR","PARTICIPAR","ACOMPANHAR"],
+      "temas_ocue":["GOVERNANCA_PARTICIPACAO","CONECTIVIDADE_INOVACAO"],
+      "direitos_deveres":["DD10"],
+      "ods_prioritarios":[11,16,17]
+    },
+    {
+      "codigo":"E8",
+      "nome":"Projeto Cidadão Urbano e acompanhamento OCUE",
+      "pergunta_geradora":"Como investigar um problema real, formular uma proposta responsável, participar e acompanhar seus desdobramentos?",
+      "conceitos_nucleares":["problema_publico","hipotese","evidencia","priorizacao","proposta","responsabilidade","encaminhamento","protocolo","monitoramento","resultado","aprendizagem_reflexiva"],
+      "etapas_ciclo":["CONHECER","OBSERVAR","MAPEAR","CLASSIFICAR","PROPOR","PARTICIPAR","ACOMPANHAR"],
+      "temas_ocue":["GOVERNANCA_PARTICIPACAO","CONECTIVIDADE_INOVACAO"],
+      "direitos_deveres":["DD10","DD11","DD12"],
+      "ods_prioritarios":[4,11,16,17]
+    }
+  ],
+  "relacoes_semanticas_obrigatorias": [
+    "TERRITORIO -> CONTEM -> OCORRENCIA",
+    "OCORRENCIA -> E_SUPORTADA_POR -> EVIDENCIA",
+    "OCORRENCIA -> E_CLASSIFICADA_EM -> TEMA_OCUE",
+    "OCORRENCIA -> PODE_AFETAR -> DIREITO_DEVER",
+    "OCORRENCIA -> PODE_RELACIONAR_SE_A -> ODS",
+    "EVIDENCIA -> POSSUI -> FONTE_E_NIVEL_DE_CONFIANCA",
+    "PROPOSTA -> RESPONDE_A -> OCORRENCIA",
+    "PARTICIPACAO -> ENCAMINHA -> PROPOSTA_OU_OCORRENCIA",
+    "PARTICIPACAO -> UTILIZA -> CANAL_COMPETENTE",
+    "ACOMPANHAMENTO -> REGISTRA -> RESPOSTA_RESULTADO_OU_PENDENCIA"
+  ],
+  "regras_anti_alucinacao": [
+    "percepcao_estudantil_nao_equivale_a_laudo_tecnico",
+    "indicador_municipal_nao_pode_ser_inferido_para_bairro_ou_escola",
+    "relacao_com_ODS_deve_ter_justificativa_e_nao_ser_automatica",
+    "competencia_de_orgao_publico_deve_ser_verificada_antes_de_encaminhamento",
+    "fonte_oficial_e_observacao_cidada_devem_permanecer_em_camadas_distintas"
+  ]
+}
