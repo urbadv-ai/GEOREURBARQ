@@ -1,0 +1,26 @@
+name: OCUE Learning Assessment Validation
+
+on:
+  push:
+    branches: [conteudo-programatico-v1]
+    paths:
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/sistema_avaliacao_aprendizagem_v1_0.json'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_sistema_avaliacao.py'
+      - '.github/workflows/ocue-avaliacao-aprendizagem-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate learning assessment system
+        run: python observatorio-cidadao-urbano-escolar/pedagogico/conteudo/validate_sistema_avaliacao.py
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocue-avaliacao-aprendizagem-validation
+          path: observatorio-cidadao-urbano-escolar/pedagogico/conteudo/sistema_avaliacao_validation_report.json
