@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[3]
 GOV = ROOT / "observatorio-cidadao-urbano-escolar" / "pedagogico" / "governanca"
 OLD = json.loads((GOV / "maturidade_projeto_v1_0.json").read_text(encoding="utf-8"))
 NEW = json.loads((GOV / "maturidade_projeto_v1_1.json").read_text(encoding="utf-8"))
-REG = json.loads((GOV / "REGISTRO_MESTRE_EXECUCAO_v1_0.json").read_text(encoding="utf-8"))
+REG = json.loads((GOV / "REGISTRO_MESTRE_EXECUCAO_v1_1.json").read_text(encoding="utf-8"))
 REPORT = GOV / "maturidade_validation_report.json"
 
 errors: list[str] = []
@@ -23,6 +23,10 @@ if set(new_d) != expected_ids or len(new_d) != 11:
     errors.append(f"dimensions_expected_D1_D11_found={sorted(new_d)}")
 if set(old_d) != expected_ids:
     errors.append("old_snapshot_dimension_set_changed_or_invalid")
+if NEW.get("registro_mestre_base") != "REGISTRO_MESTRE_EXECUCAO_v1_1.json":
+    errors.append("maturity_snapshot_must_reference_corrected_registry_v1_1")
+if REG.get("version") != "1.1.0":
+    errors.append(f"registry_version_expected_1.1.0_found={REG.get('version')}")
 
 weight_sum = sum(float(d.get("peso", 0)) for d in new_d.values())
 if abs(weight_sum - 100) > 1e-9:
@@ -91,6 +95,7 @@ if not NEW.get("gates_abertos_que_impedem_fechamento_P1"):
 report = {
     "validator": "validate_maturidade_projeto.py",
     "snapshot_version": NEW.get("version"),
+    "registry_version": REG.get("version"),
     "status": "REPROVADO" if errors else "APROVADO_SNAPSHOT_MATURIDADE_AUDITADO_NA_BRANCH",
     "checks": {
         "weights_sum": weight_sum,
