@@ -4,7 +4,7 @@ on:
   push:
     branches: [conteudo-programatico-v1]
     paths:
-      - 'observatorio-cidadao-urbano-escolar/pedagogico/governanca/REGISTRO_MESTRE_EXECUCAO_v1_0.json'
+      - 'observatorio-cidadao-urbano-escolar/pedagogico/governanca/REGISTRO_MESTRE_EXECUCAO_v1_1.json'
       - 'observatorio-cidadao-urbano-escolar/pedagogico/governanca/validate_registro_mestre_execucao.py'
       - '.github/workflows/ocue-registro-mestre-validate.yml'
   workflow_dispatch:
