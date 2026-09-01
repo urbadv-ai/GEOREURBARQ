@@ -2,7 +2,7 @@
   {
     "arquivo": "raw/current/ibge_sidra_4714_municipios_2022.json.gz",
     "fonte_url": "https://apisidra.ibge.gov.br/values/t/4714/n6/all/v/93/p/2022",
-    "capturado_em_utc": "2026-08-26T22:38:28Z",
+    "capturado_em_utc": "2026-09-01T10:54:12Z",
     "sha256_fonte_bruta": "ec3c169ff4e6f59641c3ec681aabe2b96b65edf2273e2f319eaa37d565413558",
     "bytes_fonte_bruta": 1447059,
     "sha256_arquivo_gzip": "23f906c45dd7bc9fb0c903b367edbd48d6e03897e258dbb8d4ef8503741c0165",
@@ -12,7 +12,7 @@
   {
     "arquivo": "raw/current/idsc_buscarAllPerfilCidadeDetalhes.json.gz",
     "fonte_url": "https://www.cidadessustentaveis.org.br/api/idsc-br/buscarAllPerfilCidadeDetalhes",
-    "capturado_em_utc": "2026-08-26T22:38:28Z",
+    "capturado_em_utc": "2026-09-01T10:54:12Z",
     "sha256_fonte_bruta": "1371507144b639b8fabd4bc98c714e2491b6a639ae33dc51ae2969838706b5d7",
     "bytes_fonte_bruta": 95232104,
     "sha256_arquivo_gzip": "c66141b231332cbaef2b196be37466d67cf66bb213496ea4ecb0d427b4d92dc6",
@@ -22,7 +22,7 @@
   {
     "arquivo": "raw/current/idsc_buscarAllPerfilCidade.json.gz",
     "fonte_url": "https://www.cidadessustentaveis.org.br/api/idsc-br/buscarAllPerfilCidade",
-    "capturado_em_utc": "2026-08-26T22:38:28Z",
+    "capturado_em_utc": "2026-09-01T10:54:12Z",
     "sha256_fonte_bruta": "ab88ee9b8191f55770d9cfd0c8d9555efed4fe55b233b6258ffe4c1dbf8a339d",
     "bytes_fonte_bruta": 960452,
     "sha256_arquivo_gzip": "2c20735cb188894f4d241c4dbdbf5886244b007f37efcf7900ab5752fdaa76fa",
@@ -32,7 +32,7 @@
   {
     "arquivo": "raw/current/idsc_buscarPanoramaOdsCidades.json.gz",
     "fonte_url": "https://www.cidadessustentaveis.org.br/api/idsc-br/buscarPanoramaOdsCidades",
-    "capturado_em_utc": "2026-08-26T22:38:28Z",
+    "capturado_em_utc": "2026-09-01T10:54:12Z",
     "sha256_fonte_bruta": "819cf20c215dad8b0d8dc78c26bf7a8416ba0c9e02510238c57aaa894f8506fe",
     "bytes_fonte_bruta": 9943694,
     "sha256_arquivo_gzip": "62965bd0359b200e00f0ae998622b97ff393d9ba51a85f64b361481dee580ac7",
@@ -42,7 +42,7 @@
   {
     "arquivo": "raw/current/idsc_buscarLabelsOds.json.gz",
     "fonte_url": "https://www.cidadessustentaveis.org.br/api/idsc-br/buscarLabelsOds",
-    "capturado_em_utc": "2026-08-26T22:38:28Z",
+    "capturado_em_utc": "2026-09-01T10:54:12Z",
     "sha256_fonte_bruta": "347775f5123099fb2eea4c96b02109f815840c951bb73231b79177aaafe37545",
     "bytes_fonte_bruta": 1035,
     "sha256_arquivo_gzip": "94b30f92c889b843cc72b2be486558fb5cdc416f2851f78daf61f1c45081a8ea",
@@ -52,7 +52,7 @@
   {
     "arquivo": "raw/current/idsc_buscarInfoIndicadorIdsc.json.gz",
     "fonte_url": "https://www.cidadessustentaveis.org.br/api/idsc-br/buscarInfoIndicadorIdsc",
-    "capturado_em_utc": "2026-08-26T22:38:28Z",
+    "capturado_em_utc": "2026-09-01T10:54:12Z",
     "sha256_fonte_bruta": "286662d700ee0ff4b3a065b86bfa2f5532b0c0b893bab429a38f8ccaa6fc1cfd",
     "bytes_fonte_bruta": 69032,
     "sha256_arquivo_gzip": "f33c91926758e681e27c84053141c2fa37d419d2a05a69a0b96b84894f15fed9",
