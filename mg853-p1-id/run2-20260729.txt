@@ -1,0 +1,1 @@
+Execução corrigida com API IDHM institucional e API pública IDSC em 2026-07-29.
